@@ -1,0 +1,26 @@
+@import '../../styles/variables.scss';
+@import "../../styles/mixins.scss";
+
+.layout {
+  min-width: 220px;
+  min-height: 35rem;
+  // background-color: rgb(241, 241, 241);
+
+  @include medium {
+    min-width: 135px;
+  }
+
+  @include small {
+    min-width: 226px;
+  }
+}
+.container{
+  display: flex;
+  flex-direction: column;
+  max-width: 1820px;//1320px;
+  min-width: 100px;
+  min-height: 33rem;
+  margin:0px auto 32px auto;
+  padding:32px;
+  color:black;
+}

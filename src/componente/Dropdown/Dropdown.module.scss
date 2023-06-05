@@ -1,0 +1,65 @@
+@import "../../styles/variables.scss";
+
+.dropdown {
+    width: 100%;
+    border-bottom: 1px solid $color-gray-400;
+    // border-radius: 12px;
+}
+
+.classicOption {
+    cursor: "pointer";
+}
+
+.bold {
+    font-weight: $font-bold;
+}
+
+.semibold {
+    font-weight: $font-semibold;
+}
+
+.medium {
+    font-weight: $font-medium;
+}
+
+.regular {
+    font-weight: $font-regular;
+}
+
+.buton {
+    &__control {
+        font-size: $font-button;
+        // color: #0241ae;
+    }
+
+    &__placeholder {
+        color: $color-primary-500;
+    }
+}
+
+.bodySmall {
+    font-size: $font-body-small;
+}
+
+.optionCheck {
+    width: 13px;
+    height: 11px;
+    padding-top: 5px;
+    text-align: center;
+}
+
+.optionLabel {
+    align-self: center;
+    font-size: $font-body-small;
+    font-weight: $font-bold;
+}
+
+.selectError {
+    border-color: $color-alert-400;
+}
+
+.helperErr {
+    font-size: $font-body-tiny;
+    color: $color-alert-500;
+    margin-top: 10px;
+}

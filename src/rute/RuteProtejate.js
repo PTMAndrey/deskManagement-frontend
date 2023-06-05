@@ -1,7 +1,7 @@
 import { Outlet, Navigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
-const ProtectedRoutes = ({ role }) => {
+const RuteProtejate = ({ role }) => {
   let location = useLocation();
   const { isLoggedIn } = useAuth();
 
@@ -12,4 +12,4 @@ const ProtectedRoutes = ({ role }) => {
   );
 };
 
-export default ProtectedRoutes;
+export default RuteProtejate;

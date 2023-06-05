@@ -5,13 +5,14 @@ import {
   Outlet,
 } from "react-router-dom";
 
-import Header from "./pages/Header/Header";
-import Home from "./pages/Home/Home";
-import Layout from './pages/Layout/Layout'
-import ProtectedRoute from "./routes/ProtectedRoutes";
-import Alert from "./components/Alert/Alert";
+import Header from "./componente/Header/Header";
+import PaginaPrincipala from "./pagini/PaginaPrincipala/PaginaPrincipala";
+import Layout from './pagini/Layout/Layout'
+import RuteProtejate from "./rute/RuteProtejate";
+import Alert from "./componente/Alert/Alert";
 import useStateProvider from "./hooks/useStateProvider";
 import useWindowDimensions from "./hooks/useWindowDimensions"
+import Login from "./pagini/Login/Login";
 
 function App() {
   const { width } = useWindowDimensions();
@@ -22,13 +23,14 @@ function App() {
         <Route
           element={
             <>
-              <Header expand = {width >= 630 ? "md" : false} ></Header>
+              <Header expand={width >= 750 ? "md" : false} ></Header>
               <Layout>
-                <ProtectedRoute />
+                <RuteProtejate />
               </Layout>
             </>
           }
         >
+
           {/* protected routes */}
           {/* <Route path="/add" element={<AddEdit />} />
           <Route path="/add/preview" element={<Preview />} />
@@ -45,7 +47,7 @@ function App() {
         <Route
           element={
             <>
-              <Header expand = {width >= 630 ? "sm" : false} ></Header>
+              <Header expand={width >= 750 ? "sm" : false} ></Header>
               <Layout>
                 <Outlet />
               </Layout>
@@ -53,15 +55,15 @@ function App() {
           }
         >
           {/* public routes */}
-          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<PaginaPrincipala />} />
           {/* <Route path="/listing" element={<Listing />} />
           <Route path="/listing/:id" element={<Details />} />
           <Route path="/favorites" element={<Favorites />} /> */}
         </Route>
 
         {/* onboarding routes */}
-        {/* <Route path="/login" element={<Onboarding />} />
-        <Route path="/register" element={<Onboarding />} />
+        {/* <Route path="/register" element={<Onboarding />} />
         <Route path="/forgot-password" element={<Onboarding />} />
         <Route path="/reset-password" element={<Onboarding />} /> */}
       </Routes>
