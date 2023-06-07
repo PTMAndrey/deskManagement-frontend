@@ -15,6 +15,16 @@ import pc from "../../assets/icons/pc.svg";
 import styles from './BirouriEtaj.module.scss';
 import { CiUndo } from 'react-icons/ci';
 
+import {
+    MDBBtn,
+    MDBModal,
+    MDBModalDialog,
+    MDBModalContent,
+    MDBModalHeader,
+    MDBModalTitle,
+    MDBModalBody
+  } from 'mdb-react-ui-kit';
+import BookDesk from '../BookDesk/BookDesk';
 
 const BirouriEtaj = ({ rolComponenta }) => {
     const { user } = useAuth();
@@ -28,7 +38,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
     const [ZIndex, setZIndex] = useState(10);
     const [modal, setModal] = useState(false);
     const [counter, setCounter] = useState(0);
-    const [deleteDeskID, setDeleteDeskID] = useState(null);
+    const [deskID, setDeskID] = useState(null);
 
     const [openPopup, setOpenPopup] = useState(false);
     const togglePopup = () => {
@@ -40,6 +50,10 @@ const BirouriEtaj = ({ rolComponenta }) => {
     const stageRef = useRef();
     const [images, setImages] = useState([]);
     let id = uuidv4();
+
+    const toggleModal = () => {
+        setModal(!modal);
+    };
 
 
     useEffect(() => {
@@ -59,16 +73,16 @@ const BirouriEtaj = ({ rolComponenta }) => {
                 //     stageRef.current.setPointersPositions({x: birou.coordX, y: birou.coordY})
                 // })
                 const newImages = response.data.map((birou, index) => ({
-                    id: birou.id, 
-                    counter: Number(String(birou.numar).slice(0, -1)), 
-                    src: "http://localhost:3000/static/media/pc.55f98d641c464c430c2ad803d1ea18da.svg", 
-                    x: birou.coordX, 
-                    y: birou.coordY 
+                    id: birou.id,
+                    counter: Number(String(birou.numar).slice(0, -1)),
+                    src: "http://localhost:3000/static/media/pc.55f98d641c464c430c2ad803d1ea18da.svg",
+                    x: birou.coordX,
+                    y: birou.coordY
                 }));
-                response.data.map((birou, index) => stageRef.current.setPointersPositions({x: birou.coordX, y: birou.coordY}));
-                
+                response.data.map((birou, index) => stageRef.current.setPointersPositions({ x: birou.coordX, y: birou.coordY }));
+
                 setImages(newImages);
-                
+
                 setCounter(response.data.length);
             }
         } catch (error) {
@@ -144,12 +158,12 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
     const handleStergeBirouriAdmin = () => {
         if (counter > 0) {
-            console.log(deleteDeskID);
-            if (!deleteDeskID) {
+            console.log(deskID);
+            if (!deskID) {
                 setImages(images.slice(0, -1));
             } else {
-                setImages(images.filter(item => item.id !== deleteDeskID));
-                setDeleteDeskID(null);
+                setImages(images.filter(item => item.id !== deskID));
+                setDeskID(null);
             }
             togglePopup();
             setCounter(counter - 1);
@@ -264,7 +278,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
                                                 id={image.id}
                                                 isDraggable={'true'}
                                                 className={styles.itemOnClick}
-                                                onClick={(e) => { console.log("ASASA", e.target.attrs.id); togglePopup(); setDeleteDeskID(e.target.attrs.id) }}
+                                                onClick={(e) => { console.log("ASASA", e.target.attrs.id); togglePopup(); setDeskID(e.target.attrs.id) }}
                                             />
 
                                         );
@@ -318,8 +332,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
                                             id={image.id}
                                             className={styles.itemOnClick}
                                             isDraggable={'false'}
-                                            // onClick={(e) => { console.log("ASASA", e.target.attrs.id); rolComponenta === 'adaugaBirou' ? togglePopup() : setModal(true); setDeleteDeskID(e.target.attrs.id) }}
-                                            onClick={(e) => console.log('PL',e.target.id)}
+                                            onClick={(e) => { console.log('PL', e.target.id); toggleModal(); setDeskID(e.target.attrs.id) }}
                                         />
 
                                     );
@@ -350,7 +363,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
                                     </button>
                                     <button
                                         className={styles.deletePopup}
-                                        onClick={() => { togglePopup(); setDeleteDeskID(null) }}
+                                        onClick={() => { togglePopup(); setDeskID(null) }}
                                     >
                                         Renunț
                                     </button>
@@ -360,6 +373,24 @@ const BirouriEtaj = ({ rolComponenta }) => {
                     />
                 )
             }
+
+            {modal && (
+                <MDBModal show={modal} tabIndex='-1' setShow={setModal}>
+                <MDBModalDialog size="lg">
+                  <MDBModalContent>
+                    <MDBModalHeader>
+                      <MDBModalTitle>Rezerva birou</MDBModalTitle>
+                      <MDBBtn className='btn-close' color='none' onClick={toggleModal}></MDBBtn>
+                    </MDBModalHeader>
+                    <MDBModalBody className='d-flex flex-direction-column'>
+                        <BookDesk rol='rezervareBirou' idEtaj={etaj.value} idBirou = {deskID} toggleModal={toggleModal}/>
+
+                    </MDBModalBody>
+                  </MDBModalContent>
+                </MDBModalDialog>
+              </MDBModal>
+            )}
+
         </div >
     );
 };

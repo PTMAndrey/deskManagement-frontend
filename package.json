@@ -9,6 +9,7 @@
     "axios": "^0.27.2",
     "bootstrap": "^5.2.2",
     "caniuse-lite": "^1.0.30001481",
+    "mdb-react-ui-kit": "^6.1.0",
     "moment": "^2.29.4",
     "node-sass": "^7.0.3",
     "prop-types": "^15.8.1",

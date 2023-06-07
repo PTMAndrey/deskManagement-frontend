@@ -60,7 +60,18 @@ export const getBirouriPeEtaj = async (etaj) => {
 export const getBirouriLiberePeEtaj = async (data) => {
   try {
     const response = await axios.get(
-      "/birou/get/freeDesks/" + data.etaj + '/' + data.ziuaCautare + '/' + data.oraInceput + '/' + data.oraFinal
+      "/birou/get/freeDesks/" + data.etaj + '/' + data.ziuaCautare + '/' + data.oraInceput + '/' + data.oraIncheiere
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getIsBirouFree= async (id,data) => {
+  try {
+    const response = await axios.get(
+      "/birou/get/isBirouFree/" + id + '/' + data.ziuaCautare + '/' + data.oraInceput + '/' + data.oraIncheiere
     );
     return response;
   } catch (error) {
@@ -80,3 +91,17 @@ export const addBirouri = async (etajID, counter, x, y) => {
     console.log(error);
   }
 };
+
+
+
+export const rezervaBirou = async (idBirou, userID,data) => {
+  try {
+    const response = await axios.post(
+      "/rezervare/add/" + idBirou + '/' + userID, {'data':data.ziuaCautare, 'oraFinal' : data.oraIncheiere, 'oraInceput':data.oraInceput}
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+

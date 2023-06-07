@@ -25,7 +25,7 @@ const PaginaPrincipala = () => {
       {(() => {
         switch (miniNav) {
           case 'search':
-            return <BookDesk/>;
+            return <BookDesk rol='cautaBirou'/>;
           case 'map':
             return <BirouriEtaj rolComponenta={user?.rol === 'Admin' ? "adaugaBirou" : "rezervaBirou" } />
           default:

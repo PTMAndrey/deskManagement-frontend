@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react'
 import styles from './BookDesk.module.scss'
 import Dropdown from '../Dropdown/Dropdown'
-import {Col, Row } from 'react-bootstrap'
+import { Col, Row } from 'react-bootstrap'
 import Input from '../Input/Input';
-import { getBirouriLiberePeEtaj } from '../../api/API'
+import { getBirouriLiberePeEtaj, getIsBirouFree, rezervaBirou } from '../../api/API'
 import useStateProvider from '../../hooks/useStateProvider';
 import Button from '../Buton/Buton'
-import {RiUserSearchLine} from 'react-icons/ri'
+import useAuth from '../../hooks/useAuth';
 
 const BookDesk = (props) => {
 
   const [showErrors, setShowErrors] = useState(false);
-
+  const {userID} = useAuth();
   const { setAlert } = useStateProvider();
   const [birouriDisponibile, setBirouriDisponibile] = useState(null);
+  const [raspunsRezervareBirou, setRaspunsRezervareBirou] = useState(null);
 
   const transformDate = (e) => {
     return (e.getFullYear() + '-' + ((e.getMonth() + 1) < 10 ? ('0' + String(e.getMonth() + 1)) : (e.getMonth() + 1)) + '-' + ((e.getDate() < 10 ? '0' + String(e.getDate()) : e.getDate())));
@@ -90,7 +91,7 @@ const BookDesk = (props) => {
   // check errors
   const checkErrors = (field) => {
 
-    if (field === 'etaj') {
+    if (field === 'etaj' && props.rol === 'cautaBirou') {
       if (!formValue.etaj)
         return 'Selectarea etajului este obligatorie';
     }
@@ -143,10 +144,20 @@ const BookDesk = (props) => {
       }
       if (isFormValid()) {
         setShowErrors(false);
-        const response = await getBirouriLiberePeEtaj(formValue);
-        if (response.status === 200) {
-          console.log(response.data);
-          setBirouriDisponibile(response.data);
+        if (props.rol === 'cautaBirou') {
+          const response = await getBirouriLiberePeEtaj(formValue);
+          if (response.status === 200) {
+            console.log(response.data);
+            setBirouriDisponibile(response.data);
+          }
+        }
+        if (props.rol === 'rezervareBirou') {
+          console.log(props.idBirou)
+          const response = await getIsBirouFree(props.idBirou, formValue);
+          if (response.status === 200) {
+            console.log(response);
+            setRaspunsRezervareBirou(response.data);
+          }
         }
       }
     } catch (e) {
@@ -154,23 +165,37 @@ const BookDesk = (props) => {
     }
   }
 
+  const handleRezervaAcum = async() =>{
+try {
+  const response = await rezervaBirou(props.idBirou, userID, formValue);
+  if(response.status === 200){
+    setAlert({ type: 'success', message: 'Rezervare efectuata cu succes!' });
+    props.toggleModal();
+  }
+} catch (error) {
+  console.log(e);
+}
+  }
+
   return (
     <div className={styles.bookDeskContainer}>
       <Row className={styles.bookDeskBody}>
-        <Col>
-          <p className={styles.label}>Etaj</p>
-          <Dropdown
-            className='mt-4'
-            name='etaj'
-            title={'Etaj'}
-            options={etaje}
-            onChange={(e) => {
-              setFormValue({ ...formValue, etaj: e.value })
-            }}
-            error={showErrors && checkErrors('etaj') ? true : false}
-            helper={showErrors ? checkErrors('etaj') : ''}
-          />
-        </Col>
+        {props.rol === 'cautaBirou' &&
+          <Col>
+            <p className={styles.label}>Etaj</p>
+            <Dropdown
+              className='mt-4'
+              name='etaj'
+              title={'Etaj'}
+              options={etaje}
+              onChange={(e) => {
+                setFormValue({ ...formValue, etaj: e.value })
+              }}
+              error={showErrors && checkErrors('etaj') ? true : false}
+              helper={showErrors ? checkErrors('etaj') : ''}
+            />
+          </Col>
+        }
         <Col>
           <p className={styles.label}>Ziua</p>
 
@@ -185,7 +210,6 @@ const BookDesk = (props) => {
                 setFormValue({ ...formValue, ziuaCautare: transformDate(e.target.valueAsDate) })
             }}
             min={dataAzi}
-            // readOnly
             required
             error={showErrors && checkErrors('ziuaCautare') ? true : false}
             helper={showErrors ? checkErrors('ziuaCautare') : ''}
@@ -197,7 +221,6 @@ const BookDesk = (props) => {
             title={!ora1 ? 'Alege ora' : ora1}
             options={firstInterval}
             className='mt-4'
-            // searchable={width < 750 ? false : true}
             onChange={(e) => {
               setFormValue({ ...formValue, oraInceput: e.value + ':00' })
               setOra1(e.value);
@@ -206,17 +229,6 @@ const BookDesk = (props) => {
             error={showErrors && checkErrors('oraInceput') ? true : false}
             helper={showErrors ? checkErrors('oraInceput') : ''}
           />
-          {/* <Dropdown
-            title={!formValue?.oraInceput ? 'Alege ora' : formValue?.oraInceput}
-            options={firstInterval.filter(option => option.value)}
-            className='mt-4'
-            onChange={(e) => {
-              setFormValue({ ...formValue, oraInceput: e.value + ':00' })
-              setOra1(Number(e.value));
-            }}
-            error={showErrors && checkErrors('oraIncheiere') ? true : false}
-            helper={showErrors ? checkErrors('oraIncheiere') : ''}
-          /> */}
         </Col>
         <Col>
           <p className={styles.label}>Ora incheiere</p>
@@ -224,7 +236,6 @@ const BookDesk = (props) => {
             title={!ora2 ? 'Alege ora' : Number(ora1) >= Number(ora2) ? "Alege ora" : ora2}
             options={secondInterval}
             className='mt-4'
-            // searchable={width < 750 ? false : true}
             onChange={(e) => {
               setFormValue({ ...formValue, oraIncheiere: e.value + ':00' })
               setOra2(e.value);
@@ -232,39 +243,50 @@ const BookDesk = (props) => {
             error={showErrors && checkErrors('oraIncheiere') ? true : false}
             helper={showErrors ? checkErrors('oraIncheiere') : ''}
           />
-          {/* 
-          <Dropdown
-            title={!formValue?.oraIncheiere ? 'Alege ora' : formValue?.oraIncheiere}
-            options={secondInterval.filter(option => option.value)}
-            className='mt-4'
-            onChange={(e) => {
-              setFormValue({ ...formValue, oraIncheiere: e.value + ':00' })
-            }}
-            error={showErrors && checkErrors('oraIncheiere') ? true : false}
-            helper={showErrors ? checkErrors('oraIncheiere') : ''}
-          /> */}
 
         </Col>
 
         <Col>
-          <Button variant="tertiary" className='mt-4 rounded-pill' label="Cauta" border={false} iconRol='search' position='left' onClick={() => handleSearch()}/>
+          <Button variant="tertiary" className='mt-4 rounded-pill' label='Cauta' border={false} iconRol='search' position='left' onClick={() => handleSearch()} />
         </Col>
 
       </Row>
       <Row>
+        {props.rol === 'cautaBirou' &&
+          <>
+            {(birouriDisponibile && formValue.ziuaCautare) && <>
+              {console.log(birouriDisponibile)}
+              {birouriDisponibile.map((birou, index) => (
+                <div key={index}>
+                  <p>Biroul {birou.numar} este disponibil in intervalul [ {formValue.oraInceput} - {formValue.oraIncheiere} ] la data de {formValue.ziuaCautare}</p>
+                </div>)
+              )}
+            </>}
+            {birouriDisponibile?.length === 0 &&
+              <>
+                <p>Nu exista birouri disponibile</p>
+              </>}
+          </>
+        }
+        {props.rol === 'rezervareBirou' && raspunsRezervareBirou === true &&
+          <>
+          <Col>
+          <p>Biroul este disponibil</p>
+          </Col>
+            <Col>
+              <Button variant="tertiary" className='mt-4 rounded-pill' label='Rezerva acum' border={false} iconRol='search' position='left' onClick={() => handleRezervaAcum()} />
+            </Col>
+          </>
+        }
+        {props.rol === 'rezervareBirou' && raspunsRezervareBirou === false &&
+          <>
+            <Col>
+              <p style={{color:'red'}}>Biroul nu este disponibil la aceasta data</p>
+            </Col>
+          </>
+        }
 
-        { (birouriDisponibile && formValue.ziuaCautare)  && <>
-          {console.log(birouriDisponibile)}
-          {birouriDisponibile.map((birou, index) => (
-            <div key={index}>
-              <p>Biroul {birou.numar} este disponibil in intervalul [ {formValue.oraInceput} - {formValue.oraIncheiere} ] la data de {formValue.ziuaCautare}</p>
-            </div>)
-          )}
-        </>}
-        {birouriDisponibile?.length === 0 &&
-        <>
-        <p>Nu exista birouri disponibile</p>
-        </>}
+
       </Row>
     </div>
   )
