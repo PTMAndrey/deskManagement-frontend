@@ -81,10 +81,10 @@ export const getIsBirouFree= async (id,data) => {
 
 
 
-export const addBirouri = async (etajID, counter, x, y) => {
+export const addBirouri = async (etajID, camera, x, y) => {
   try {
     const response = await axios.post(
-      "/birou/add?numar=" + counter + '&etaj=' + etajID + '&coordX=' + x + '&coordY=' + y
+      "/birou/add?numar=" + camera + '&etaj=' + etajID + '&coordX=' + x + '&coordY=' + y
     );
     return response;
   } catch (error) {
@@ -94,7 +94,7 @@ export const addBirouri = async (etajID, counter, x, y) => {
 
 
 
-export const rezervaBirou = async (idBirou, userID,data) => {
+export const rezervaBirou = async (idBirou, userID, data) => {
   try {
     const response = await axios.post(
       "/rezervare/add/" + idBirou + '/' + userID, {'data':data.ziuaCautare, 'oraFinal' : data.oraIncheiere, 'oraInceput':data.oraInceput}

@@ -27,7 +27,7 @@ const PaginaPrincipala = () => {
           case 'search':
             return <BookDesk rol='cautaBirou'/>;
           case 'map':
-            return <BirouriEtaj rolComponenta={user?.rol === 'Admin' ? "adaugaBirou" : "rezervaBirou" } />
+            return <BirouriEtaj rolComponenta={user?.rol === 'Admin' ? "admin" : "client" } />
           default:
             return null;
         }

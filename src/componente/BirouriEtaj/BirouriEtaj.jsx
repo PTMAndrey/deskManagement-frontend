@@ -3,17 +3,18 @@ import { Stage, Layer, Group, Image } from "react-konva";
 import { Html } from 'react-konva-utils';
 import { v4 as uuidv4 } from "uuid";
 import useImage from 'use-image';
-import { Col } from 'react-bootstrap';
+import { Col, Row } from 'react-bootstrap';
 import { addBirouri, getBirouriPeEtaj } from '../../api/API';
 import Buton from '../Buton/Buton'
 import Popup from '../Popup/Popup';
 import Dropdown from '../Dropdown/Dropdown';
 import Img from "../Image/Image";
 import useAuth from '../../hooks/useAuth';
-import Etaj from './Etaj';
+import Etaj from './Etaj3';
 import pc from "../../assets/icons/pc.svg";
 import styles from './BirouriEtaj.module.scss';
 import { CiUndo } from 'react-icons/ci';
+import { birou1, birou2, birou3, birou4, birou5, birou6 } from './coordonatesBiouri';
 
 import {
     MDBBtn,
@@ -23,10 +24,14 @@ import {
     MDBModalHeader,
     MDBModalTitle,
     MDBModalBody
-  } from 'mdb-react-ui-kit';
+} from 'mdb-react-ui-kit';
 import BookDesk from '../BookDesk/BookDesk';
 
 const BirouriEtaj = ({ rolComponenta }) => {
+
+    const pcNormal = "http://localhost:3000/static/media/pc.55f98d641c464c430c2ad803d1ea18da.svg";
+    const pcRezervat = "http://localhost:3000/static/media/pcRezervat.607db191bfe8b68338093fc9b66e91b9.svg";
+
     const { user } = useAuth();
     const [etaj, setEtaj] = useState({ value: 1, label: 'Etajul 1' });
 
@@ -37,8 +42,9 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
     const [ZIndex, setZIndex] = useState(10);
     const [modal, setModal] = useState(false);
-    const [counter, setCounter] = useState(0);
     const [deskID, setDeskID] = useState(null);
+    const [editBirou, setEditBirou] = useState(false);
+    const [addBirou, setAddBirou] = useState(false);
 
     const [openPopup, setOpenPopup] = useState(false);
     const togglePopup = () => {
@@ -57,37 +63,72 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
 
     useEffect(() => {
-        if (rolComponenta === 'rezervaBirou') {
-            fetchBirouri();
-        }
+        fetchBirouri();
     }, [etaj])
+
 
     const fetchBirouri = async () => {
         try {
             const response = await getBirouriPeEtaj(etaj.value);
             if (response.status === 200) {
                 console.log(response.data);
-                // response.data.map((birou, index) => {
-                //     setImages([...images, { id: birou.id, counter: Number(String(birou.numar).slice(0, -1)), src: "http://localhost:3000/static/media/pc.55f98d641c464c430c2ad803d1ea18da.svg", x: birou.coordX, y: birou.coordY }])
 
-                //     stageRef.current.setPointersPositions({x: birou.coordX, y: birou.coordY})
-                // })
-                const newImages = response.data.map((birou, index) => ({
-                    id: birou.id,
-                    counter: Number(String(birou.numar).slice(0, -1)),
-                    src: "http://localhost:3000/static/media/pc.55f98d641c464c430c2ad803d1ea18da.svg",
-                    x: birou.coordX,
-                    y: birou.coordY
-                }));
-                response.data.map((birou, index) => stageRef.current.setPointersPositions({ x: birou.coordX, y: birou.coordY }));
+                // const newImages = response.data.map((birou, index) => ({
+                //     id: birou.id,
+                //     src: { pcNormal },
+                //     x: birou.coordX,
+                //     y: birou.coordY,
+                //     numar: birou.numar,
+                //     rezervari: birou.reservari,
+                // }));
+                // response.data.map((birou, index) => stageRef.current.setPointersPositions({ x: birou.coordX, y: birou.coordY }));
+                const newImages = response.data.map((birou, index) => {
+                    const isDeskReserved = birou.reservari.some(
+                        (rezervare) =>
+                            rezervare.idBirou === birou.id && rezervare.idPersoana === user.id
+                    );
+                    console.log(isDeskReserved);
 
+                    const src = isDeskReserved ? pcRezervat : pcNormal;
+
+                    return {
+                        id: birou.id,
+                        src,
+                        x: birou.coordX,
+                        y: birou.coordY,
+                        numar: birou.numar,
+                        rezervari: birou.reservari,
+                    };
+                });
+
+                response.data.map((birou, index) =>
+                    stageRef.current.setPointersPositions({
+                        x: birou.coordX,
+                        y: birou.coordY,
+                    })
+                );
                 setImages(newImages);
-
-                setCounter(response.data.length);
             }
         } catch (error) {
             console.log(error);
         }
+    }
+
+    function isPointInPolygon(point, polygon) {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const xi = polygon[i].x, yi = polygon[i].y;
+            const xj = polygon[j].x, yj = polygon[j].y;
+            // console.log('(', xi, ',', yi, ')\n', '(', xj, ',', yj, ')\n');
+            const intersect = ((yi > point.y) !== (yj > point.y)) && (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
+
+            if (intersect) inside = !inside;
+            // console.log(inside);
+            if (inside)
+                break;
+        }
+
+        return inside;
     }
 
 
@@ -96,6 +137,9 @@ const BirouriEtaj = ({ rolComponenta }) => {
         // register event position
         stageRef.current.setPointersPositions(e);
         console.log(stageRef.current.getPointerPosition());
+
+        const point = stageRef.current.getPointerPosition();
+
         // add image
         setImages([
             ...images,
@@ -103,25 +147,33 @@ const BirouriEtaj = ({ rolComponenta }) => {
                 ...stageRef.current.getPointerPosition(),
                 src: dragUrl.current,
                 id,
-                counter: counter * Math.pow(10, etaj.value) + etaj.value, // last digit is etaj
+                numar: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
             }
         ]);
-    };
-    console.log(user);
 
-    useEffect(() => {
-        console.log(images);
-        console.log(counter);
-    }, [images])
+    };
+
+
+    // useEffect(() => {
+    //     console.log(images);
+    //     images.map(img =>
+    //         console.log(img.numar)
+    //     )
+    // }, [images])
 
     const dragHandle = (e) => {
-        //? Updated cordinates based on ID from image
 
         console.log(typeof (e.target.x()));
+
+        const point = { x: e.target.x(), y: e.target.y() };
+        console.log(point);
         setImages(
             images.map((img) => {
                 if (img.id === e.target.attrs.id) {
-                    return { ...img, x: e.target.x(), y: e.target.y() };
+                    return {
+                        ...img, x: e.target.x(), y: e.target.y(),
+                        numar: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
+                    };
                 }
 
                 return img;
@@ -138,12 +190,15 @@ const BirouriEtaj = ({ rolComponenta }) => {
             // }
             // if (isFormValid()) {
             //     setShowErrors(false);
-            const promises = images.map(image => addBirouri(etaj.value, image.counter, image.x, image.y));
+            const promises = images.map(image => addBirouri(etaj.value, image.numar, image.x, image.y));
 
             try {
                 // Wait for all promises to resolve
                 await Promise.all(promises);
+                setEditBirou(false);
                 console.log('All data successfully added.');
+                setEditBirou(false);
+                setAddBirou(false);
             } catch (err) {
                 // Handle errors here
                 console.error('An error occurred:', err);
@@ -157,7 +212,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
     }
 
     const handleStergeBirouriAdmin = () => {
-        if (counter > 0) {
+        if (images.length > 0) {
             console.log(deskID);
             if (!deskID) {
                 setImages(images.slice(0, -1));
@@ -166,71 +221,104 @@ const BirouriEtaj = ({ rolComponenta }) => {
                 setDeskID(null);
             }
             togglePopup();
-            setCounter(counter - 1);
         }
     }
+    const handleEditBirouri = () => {
+        setEditBirou(true)
+        setAddBirou(false);
+    }
 
+    const handleAddBirouri = () => {
+        setEditBirou(false);
+        setAddBirou(true);
+    }
 
+    const handleCancel = () => {
+        setEditBirou(false);
+        setAddBirou(false);
+    }
     return (
         <div >
+            {rolComponenta === 'admin' && editBirou === false &&
+                <Row className={styles.actionButtonsAdmin}>
+                    <Col>
+                        <Buton variant="tertiary" className={`mt-4 mb-4 rounded-pill  ${styles.width40}`} label='Edit' onClick={handleEditBirouri} />
+                    </Col>
+                    <Col>
+                        <Buton variant="tertiary" className={`mt-4 mb-4 rounded-pill  ${styles.width40}`} label='Add' onClick={handleAddBirouri} />
+                    </Col>
 
-            {rolComponenta === 'adaugaBirou' &&
-                <Col style={{ width: '20% !important' }}>
-                    <Buton variant="tertiary" className='mt-4 mb-4 rounded-pill' label='Salveaza' onClick={handleSaveBirouriAdmin} />
-                </Col>
+                </Row>
             }
+            <Row className={styles.actionButtonsAdmin}>
+                <Col>
+                    <Dropdown
+                        className={`mt-4 mb-4 ${styles.width40}`}
+                        name='etaj'
+                        title={etaj.label}
+                        options={etaje}
+                        onChange={(e) => {
+                            // setFormValue({ ...formValue, etaj: e.value })
+                            setEtaj({ value: e.value, label: e.label });
+                        }}
 
-            <Col>
-                <p className={styles.label}>Etaj</p>
-                <Dropdown
-                    className='mt-4'
-                    name='etaj'
-                    title={etaj.label}
-                    options={etaje}
-                    onChange={(e) => {
-                        // setFormValue({ ...formValue, etaj: e.value })
-                        setEtaj({ value: e.value, label: e.label });
-                    }}
-                // error={showErrors && checkErrors('etaj') ? true : false}
-                // helper={showErrors ? checkErrors('etaj') : ''}
-                />
-            </Col>
+                    // error={showErrors && checkErrors('etaj') ? true : false}
+                    // helper={showErrors ? checkErrors('etaj') : ''}
+                    />
+                </Col>
+
+                {rolComponenta === 'admin' && (editBirou === true || addBirou === true) &&
+                    <>
+                        <Col>
+                            <Buton variant="tertiary" className={`mt-5 mb-5 rounded-pill `} label={editBirou === true ? 'Actualizează' : 'Salvează'} onClick={handleSaveBirouriAdmin} />
+                        </Col>
+                        <Col>
+                            <Buton variant="destructive" className={`mt-5 mb-5 rounded-pill `} label='Anuleaza' onClick={handleCancel} />
+                        </Col>
+                    </>
+                }
+            </Row>
             <div
-                onDrop={rolComponenta === 'adaugaBirou' ? handleDrop : null}
+                onDrop={rolComponenta === 'admin' ? handleDrop : null}
                 onDragOver={(e) => e.preventDefault()}
                 className={styles.addBirou}
             >
-                {rolComponenta === 'adaugaBirou' ?
+                {rolComponenta === 'admin' && (editBirou === true || addBirou === true) ?
                     <>
-                        <ul className={styles.optiuni}>
-                            <li>
-                                <h4>Birou</h4>
-                                <img
-                                    alt={"pc"}
-                                    src={pc}
-                                    style={{ cursor: 'pointer' }}
-                                    width="30"
-                                    draggable="true"
-                                    onDragStart={(e) => {
-                                        dragUrl.current = e.target.src;
-                                        setCounter(counter + 1);
-                                    }}
-                                />
-                            </li>
-                            <li>
-                                <h4>Sterge ultimul birou</h4>
-                                <CiUndo style={{ cursor: images.length !== 0 ? 'pointer' : ' not-allowed' }} onClick={() => images.length !== 0 && togglePopup()} />
-                            </li>
-                        </ul>
+                        {addBirou === true &&
+                            <ul className={styles.optiuni}>
+                                <li>
+                                    <h4>Birou</h4>
+                                    <img
+                                        alt={"pc"}
+                                        src={pc}
+                                        style={{ cursor: 'pointer' }}
+                                        width="30"
+                                        draggable="true"
+                                        onDragStart={(e) => {
+                                            dragUrl.current = e.target.src;
+                                        }}
+                                    />
+                                </li>
+                                {addBirou === false ?
+                                    <li style={{ marginTop: '70px' }}></li>
+                                    :
+                                    <li >
+                                        <h4>Sterge ultimul birou</h4>
+                                        <CiUndo style={{ cursor: images.length !== 0 ? 'pointer' : ' not-allowed' }} onClick={() => images.length !== 0 && togglePopup()} />
+                                    </li>
+                                }
+                            </ul>
+                        }
                         <Stage
-                            width={1035}
+                            width={976}
                             height={558}
                             ref={stageRef}
                         >
                             <Layer>
                                 <Group
-                                    x={0}
-                                    y={-15}
+                                    x={-12}
+                                    y={-16}
                                     onMouseEnter={e => {
                                         e.target.getStage().container().style.cursor = "grab"
                                     }}
@@ -240,21 +328,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
                                     onMouseLeave={e => {
                                         const container = e.target.getStage().container();
                                         container.style.cursor = "default";
-                                    }}
-                                // tot: -60 -15
-                                // b1: -60 -15
-                                // b2: 
-                                >
-                                    {/* <Rect
-                                
-                                fill={"rgba(255, 255, 255, 0.9)"}
-                                stroke={"gray"}
-                                strokeWidth={5}
-                                lineJoin="bevel"
-                            /> */}
-                                    {/* <BGImage width={800}
-                                height={500}
-                                className={styles.itemOnClick} /> */}
+                                    }}>
                                     <Html
                                         divProps={{
                                             style: {
@@ -287,6 +361,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
                             </Layer>
                         </Stage>
                     </>
+
                     :
 
                     <Stage
@@ -374,22 +449,24 @@ const BirouriEtaj = ({ rolComponenta }) => {
                 )
             }
 
-            {modal && (
-                <MDBModal show={modal} tabIndex='-1' setShow={setModal}>
-                <MDBModalDialog size="lg">
-                  <MDBModalContent>
-                    <MDBModalHeader>
-                      <MDBModalTitle>Rezerva birou</MDBModalTitle>
-                      <MDBBtn className='btn-close' color='none' onClick={toggleModal}></MDBBtn>
-                    </MDBModalHeader>
-                    <MDBModalBody className='d-flex flex-direction-column'>
-                        <BookDesk rol='rezervareBirou' idEtaj={etaj.value} idBirou = {deskID} toggleModal={toggleModal}/>
+            {
+                modal && (
+                    <MDBModal show={modal} tabIndex='-1' setShow={setModal}>
+                        <MDBModalDialog size="lg">
+                            <MDBModalContent>
+                                <MDBModalHeader>
+                                    <MDBModalTitle>Rezerva birou</MDBModalTitle>
+                                    <MDBBtn className='btn-close' color='none' onClick={toggleModal}></MDBBtn>
+                                </MDBModalHeader>
+                                <MDBModalBody>
+                                    <BookDesk fetchBirouri={fetchBirouri} rol='rezervareBirou' idEtaj={etaj.value} idBirou={deskID} toggleModal={toggleModal} />
 
-                    </MDBModalBody>
-                  </MDBModalContent>
-                </MDBModalDialog>
-              </MDBModal>
-            )}
+                                </MDBModalBody>
+                            </MDBModalContent>
+                        </MDBModalDialog>
+                    </MDBModal>
+                )
+            }
 
         </div >
     );

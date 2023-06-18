@@ -1,0 +1,144 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+
+
+.mainContainer {
+    width: 100%;
+    min-height: 70rem;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 100%;
+    min-width: 150px;
+    margin: 0 auto 32px auto;
+    // padding: 32px;
+}
+.containerIstorie {
+    display: flex;
+    flex-direction: column;
+    margin-top: -50px;
+
+    @include responsive_W550px {
+        justify-content: center;
+        // flex-direction: row;
+    }
+}
+
+.titluIstorie {
+    font-size: $font-h3;
+    font-weight: 700;
+    color: $color-white;
+    background-color: #1B1D49;
+    padding: 15px;
+    width: 100%;
+
+    @include responsive_W550px {
+        display: flex;
+        justify-content: center;
+        font-size: $font-h4;
+    }
+}
+
+.istorieBody {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+
+    @include responsive_W550px {
+        justify-content: center;
+        align-items: center;
+    }
+
+}
+
+
+
+.cardIstorie {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    // align-items: center !important;
+    background-color: $color-dark-blue !important;
+    color: white !important;
+    width: 100% !important;
+}
+
+.descriereIstorie {
+    // display: flex !important;
+    // flex-direction: row !important;
+    // justify-content: space-between !important;
+}
+
+.imgIstorie1,
+.imgIstorie3 {
+    width: 150px !important;
+    height: 150px !important;
+    border: 2px solid $color-yellow !important;
+    padding: 10px !important;
+    margin-right: 20px;
+    float: left;
+}
+
+.imgIstorie2,
+.imgIstorie4 {
+    width: 40% !important;
+    height: 250px !important;
+    border: 2px solid $color-yellow !important;
+    padding: 10px !important;
+    margin-left: 20px;
+    float: right;
+}
+
+.descriere {
+    width: 100% !important;
+    height: 100% !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    margin: 0 25px 0 0 !important;
+
+}
+
+.titluArticol {
+    color: $color-yellow !important;
+}
+
+@include responsive_W550px {
+
+    .cardIstorie {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        min-width: 150px !important;
+    }
+
+    .imgIstorie1,
+    .imgIstorie3 {
+        width: 100% !important;
+        height: 200px !important;
+        border: 2px solid $color-yellow !important;
+        padding: 10px !important;
+        margin-right: 20px;
+        float: left;
+    }
+
+    .imgIstorie2,
+    .imgIstorie4 {
+        width: 100% !important;
+        height: 200px !important;
+        border: 2px solid $color-yellow !important;
+        padding: 10px !important;
+        margin-left: 20px;
+        float: right;
+    }
+
+    .descriereIstorie {
+        width: 100% !important;
+    }
+
+    .titluArticol {
+        margin-top: 250px !important;
+    }
+}

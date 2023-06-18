@@ -19,7 +19,7 @@ const Header = (props) => {
   const { logout } = useAuth();
   const handleLogout = () => {
     logout();
-    navigate("/");
+    navigate("/login");
   };
 
   return (
@@ -64,22 +64,11 @@ const Header = (props) => {
                     className={`${styles.profileTitle} `}
                     id={`offcanvasNavbarDropdown-expand-${props.expand}`}
                   >
-                    {/* <NavDropdown.Item className={styles.hello}>
-                        {"Hello, " + user.prenume}
-                      </NavDropdown.Item> */}
-
                     <NavDropdown.Item
                       // className={`${styles.hello}`}
-                      href="/profilulMeu/profil"
+                      href="/profil"
                     >
                       Profil
-                    </NavDropdown.Item>
-
-                    <NavDropdown.Item
-                      // className={`${styles.hello}`}
-                      href="/profilulMeu/securitate"
-                    >
-                      Securitate
                     </NavDropdown.Item>
 
                     <NavDropdown.Divider />

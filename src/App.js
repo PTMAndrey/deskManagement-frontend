@@ -13,6 +13,7 @@ import Alert from "./componente/Alert/Alert";
 import useStateProvider from "./hooks/useStateProvider";
 import useWindowDimensions from "./hooks/useWindowDimensions"
 import Login from "./pagini/Login/Login";
+import Profil from "./pagini/Profil/Profil";
 
 function App() {
   const { width } = useWindowDimensions();
@@ -30,18 +31,10 @@ function App() {
             </>
           }
         >
-
           {/* protected routes */}
-          {/* <Route path="/add" element={<AddEdit />} />
-          <Route path="/add/preview" element={<Preview />} />
-          <Route path="/confirmation" element={<Confirmation />} />
-          <Route path="/my-account">
-            <Route path="profile" element={<MyAccount />} />
-            <Route path="security" element={<MyAccount />} />
-            <Route path="notifications" element={<MyAccount />} />
-            <Route path="messages" element={<MyAccount />} />
-          </Route>
-          <Route path="/edit/:id" element={<AddEdit />} /> */}
+          <Route path="/" element={<PaginaPrincipala />} />
+          <Route path="/profil" element={<Profil />} />
+
         </Route>
 
         <Route
@@ -56,10 +49,6 @@ function App() {
         >
           {/* public routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<PaginaPrincipala />} />
-          {/* <Route path="/listing" element={<Listing />} />
-          <Route path="/listing/:id" element={<Details />} />
-          <Route path="/favorites" element={<Favorites />} /> */}
         </Route>
 
         {/* onboarding routes */}
