@@ -2,22 +2,16 @@
 @import '../../styles/mixins.scss';
 
 
-
-.mainContainer {
+.containerProfil {
     width: 100%;
-    min-height: 70rem;
+    min-height: 33rem;
+    min-width: 120px;
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
     height: 100%;
-    min-width: 150px;
     margin: 0 auto 32px auto;
     // padding: 32px;
-}
-.containerIstorie {
-    display: flex;
-    flex-direction: column;
-    margin-top: -50px;
 
     @include responsive_W550px {
         justify-content: center;
@@ -25,26 +19,10 @@
     }
 }
 
-.titluIstorie {
-    font-size: $font-h3;
-    font-weight: 700;
-    color: $color-white;
-    background-color: #1B1D49;
-    padding: 15px;
-    width: 100%;
-
-    @include responsive_W550px {
-        display: flex;
-        justify-content: center;
-        font-size: $font-h4;
-    }
-}
-
-.istorieBody {
+.profilBody {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    align-items: center;
 
     @include responsive_W550px {
         justify-content: center;
@@ -71,14 +49,14 @@
     // justify-content: space-between !important;
 }
 
-.imgIstorie1,
-.imgIstorie3 {
+.imgProfile{
     width: 150px !important;
     height: 150px !important;
     border: 2px solid $color-yellow !important;
     padding: 10px !important;
     margin-right: 20px;
     float: left;
+    min-width: 90px;
 }
 
 .imgIstorie2,
@@ -142,3 +120,25 @@
         margin-top: 250px !important;
     }
 }
+
+.previzualizarePoza{
+    display: flex;
+    flex-direction: column;
+    img {
+      height: 128px;
+      width: 164px;
+      background-color: $color-gray-50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      object-fit: cover;
+    }
+  
+    svg {
+      width: 100%;
+      cursor: pointer;
+    }
+  }

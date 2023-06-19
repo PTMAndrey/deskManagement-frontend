@@ -68,7 +68,7 @@ export const getBirouriLiberePeEtaj = async (data) => {
   }
 };
 
-export const getIsBirouFree= async (id,data) => {
+export const getIsBirouFree = async (id, data) => {
   try {
     const response = await axios.get(
       "/birou/get/isBirouFree/" + id + '/' + data.ziuaCautare + '/' + data.oraInceput + '/' + data.oraIncheiere
@@ -97,7 +97,7 @@ export const addBirouri = async (etajID, camera, x, y) => {
 export const rezervaBirou = async (idBirou, userID, data) => {
   try {
     const response = await axios.post(
-      "/rezervare/add/" + idBirou + '/' + userID, {'data':data.ziuaCautare, 'oraFinal' : data.oraIncheiere, 'oraInceput':data.oraInceput}
+      "/rezervare/add/" + idBirou + '/' + userID, { 'data': data.ziuaCautare, 'oraFinal': data.oraIncheiere, 'oraInceput': data.oraInceput }
     );
     return response;
   } catch (error) {
@@ -105,3 +105,18 @@ export const rezervaBirou = async (idBirou, userID, data) => {
   }
 };
 
+
+
+
+export const updateUserPoza = async (userid, data) => {
+  try {
+    const response = await axios.put(
+      "/persoana/update/poza/" + userid, data, {
+      headers: { 'Content-Type': 'multipart/form-data', },
+      // params:{file:file ? file : null}
+    });
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
