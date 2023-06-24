@@ -14,10 +14,13 @@ import useStateProvider from "./hooks/useStateProvider";
 import useWindowDimensions from "./hooks/useWindowDimensions"
 import Login from "./pagini/Login/Login";
 import Profil from "./pagini/Profil/Profil";
+import BirouriEtaj from "./componente/BirouriEtaj/BirouriEtaj";
+import useAuth from "./hooks/useAuth";
 
 function App() {
   const { width } = useWindowDimensions();
   const { alert } = useStateProvider();
+  const {user} = useAuth();
   return (
     <Router>
       <Routes>
@@ -34,6 +37,7 @@ function App() {
           {/* protected routes */}
           <Route path="/" element={<PaginaPrincipala />} />
           <Route path="/profil" element={<Profil />} />
+          <Route path="/birouri" element={<BirouriEtaj rolComponenta={user?.rol === 'Admin' ? "admin" : "client" } />} />
 
         </Route>
 

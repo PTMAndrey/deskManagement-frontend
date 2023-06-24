@@ -29,17 +29,6 @@ export const getUserById = async (id) => {
   try {
     const response = await axios.get("/persoana/get/" + id);
     return response;
-    // return {
-    //   data: {
-    //     userId: "44232",
-    //     firstName: "Andrei",
-    //     lastName: "Andries",
-    //     token: "tkn123",
-    //     email: "email@email.com",
-    //     password: "1234",
-    //   },
-    //   response: 200,
-    // };
   } catch (error) {
     console.log(error);
   }
@@ -55,7 +44,14 @@ export const getBirouriPeEtaj = async (etaj) => {
   }
 };
 
-
+export const searchEmployee = async(string) =>{
+  try {
+    const response = await axios.get("/persoana/get/persoane/filtrare?searchString=" + string);
+    return response;
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 export const getBirouriLiberePeEtaj = async (data) => {
   try {
@@ -84,7 +80,28 @@ export const getIsBirouFree = async (id, data) => {
 export const addBirouri = async (etajID, camera, x, y) => {
   try {
     const response = await axios.post(
-      "/birou/add?numar=" + camera + '&etaj=' + etajID + '&coordX=' + x + '&coordY=' + y
+      "/birou/add?camera=" + camera + '&etaj=' + etajID + '&coordX=' + x + '&coordY=' + y
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateBirouri = async (birouri) => {
+  try {
+    const response = await axios.put("/birou/put/update/birouri", birouri);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+export const rezervaBirou = async (idBirou, userID, data) => {
+  try {
+    const response = await axios.post(
+      "/rezervare/add/" + idBirou + '/' + userID, { 'data': data.ziuaCautare, 'oraFinal': data.oraIncheiere, 'oraInceput': data.oraInceput }
     );
     return response;
   } catch (error) {
@@ -93,11 +110,22 @@ export const addBirouri = async (etajID, camera, x, y) => {
 };
 
 
-
-export const rezervaBirou = async (idBirou, userID, data) => {
+export const getRezervariByUserID = async (userID) => {
   try {
-    const response = await axios.post(
-      "/rezervare/add/" + idBirou + '/' + userID, { 'data': data.ziuaCautare, 'oraFinal': data.oraIncheiere, 'oraInceput': data.oraInceput }
+    const response = await axios.get(
+      "/persoana/get/rezervari/" + userID
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+export const deleteRezervareByID = async (rezID) => {
+  try {
+    const response = await axios.delete(
+      "/rezervare/delete/" + rezID
     );
     return response;
   } catch (error) {

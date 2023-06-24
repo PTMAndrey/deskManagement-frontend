@@ -41,6 +41,7 @@ const Header = (props) => {
             <Offcanvas.Body className={styles.bodyNav}>
               <Nav className="justify-content-end flex-grow-1 pe-3 p-2 d-flex align-items-center">
                 <Nav.Link href="/">Acasa</Nav.Link>
+                <Nav.Link href="/birouri">Birouri</Nav.Link>
                 {!user ? (
                   <Nav.Link
                     href="/login"

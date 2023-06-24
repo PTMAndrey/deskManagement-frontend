@@ -25,7 +25,7 @@ import { HiViewList } from 'react-icons/hi'
 const BookDesk = (props) => {
 
   const [showErrors, setShowErrors] = useState(false);
-  const { userID } = useAuth();
+  const { userID, fetchUser } = useAuth();
   const { setAlert } = useStateProvider();
   const [birouriDisponibile, setBirouriDisponibile] = useState(null);
   const [raspunsRezervareBirou, setRaspunsRezervareBirou] = useState(null);
@@ -164,7 +164,7 @@ const BookDesk = (props) => {
         if (props.rol === 'cautaBirou') {
           const response = await getBirouriLiberePeEtaj(formValue);
           if (response.status === 200) {
-            setBirouriDisponibile(response.data.sort((a, b) => a.numar - b.numar));
+            setBirouriDisponibile(response.data.sort((a, b) => a.camera - b.camera));
             setSelectedValue(null);
           }
         }
@@ -172,7 +172,6 @@ const BookDesk = (props) => {
           console.log(props.idBirou)
           const response = await getIsBirouFree(props.idBirou, formValue);
           if (response.status === 200) {
-            console.log(response);
             setRaspunsRezervareBirou(response.data);
           }
         }
@@ -195,6 +194,7 @@ const BookDesk = (props) => {
         if (props.rol === 'cautaBirou') {
           handleSearch();
 
+          fetchUser();
         }
         setAlert({ type: 'success', message: 'Rezervare efectuata cu succes!' });
       }
@@ -203,7 +203,7 @@ const BookDesk = (props) => {
     }
   }
 
-  const uniqueValues = [...new Set(birouriDisponibile?.map(obj => obj.numar))];
+  const uniqueValues = [...new Set(birouriDisponibile?.map(obj => obj.camera))];
 
   const handleChange = (item) => {
     console.log(item)
@@ -228,33 +228,12 @@ const BookDesk = (props) => {
       <Row>
         {props.rol === 'cautaBirou' &&
           <>
-            {/* <Row className={styles.camereBirouriLibere}>
-              <Col>
-                <span><HiViewList/></span>
-                <span>Camera 1</span>
-              </Col>
-            </Row>
-            <Row className={styles.camereBirouriLibere}>
-              <div>Camera 2</div>
-            </Row>
-            <Row className={styles.camereBirouriLibere}>
-              <div>Camera 3</div>
-            </Row> */}
             {(birouriDisponibile && formValue.ziuaCautare) &&
               <>
                 <Row>
                   <p>Ziua aleasa: {moment(formValue.ziuaCautare, 'YYYY-MM-DD').format('DD MMMM YYYY')}</p>
                 </Row>
                 <div>
-                  {/* <select onChange={handleChange} style={{ cursor: 'pointer' }}>
-                    <option value='noValue'>Alege camera</option>
-                    {uniqueValues.map((item, ind) => (
-                      <option key={ind} value={item}>
-                        Camera {item}
-                      </option>
-                    ))}
-                  </select> */}
-
                   {uniqueValues?.map((item, ind) => (
                     <Row key={item} className={styles.camereBirouriLibere} onClick={() => handleChange(item)}>
                       <Col>
@@ -266,22 +245,12 @@ const BookDesk = (props) => {
 
                   {selectedValue && (
                     <div style={{ border: '1px solid gray !important' }}>
-                      {/* {birouriDisponibile?.map((obj, ind) => (
-                        {
-                          obj.numar == selectedValue &&
-                            <Row key={ind} className={styles.birouLiber}>
-                              <Col className={styles.birouLiberText}>Birou in camera {obj.numar} este disponibil in intervalul <b> {formValue.oraInceput} - {formValue.oraIncheiere} </b> </Col>
-                              <Col style={{ width: '1%!important' }}></Col>
-                              <Button label='Rezerva' className={styles.rezervaBirouriLibere} onClick={() => { toggleModalConfirmareRezervare(); setDeskID(obj.id); handleRezervaAcum() }} />
-                            </Row>
-                        })
-                      )} */}
                       {birouriDisponibile?.map((obj, ind) => {
-                        if (obj.numar === selectedValue) {
+                        if (obj.camera === selectedValue) {
                           return (
                             <Row key={ind} className={styles.birouLiber}>
                               <Col className={styles.birouLiberText}>
-                                Birou in camera {obj.numar} este disponibil in intervalul{' '}
+                                Birou in camera {obj.camera} este disponibil in intervalul{' '}
                                 <b>
                                   {formValue.oraInceput} - {formValue.oraIncheiere}
                                 </b>
