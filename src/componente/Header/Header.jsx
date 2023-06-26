@@ -42,6 +42,9 @@ const Header = (props) => {
               <Nav className="justify-content-end flex-grow-1 pe-3 p-2 d-flex align-items-center">
                 <Nav.Link href="/">Acasa</Nav.Link>
                 <Nav.Link href="/birouri">Birouri</Nav.Link>
+                {user?.rol === 'Admin' && <Nav.Link href="/utilizatori">Utilizatori </Nav.Link>}
+
+
                 {!user ? (
                   <Nav.Link
                     href="/login"
@@ -83,6 +86,7 @@ const Header = (props) => {
                     </NavDropdown.Item>
                   </NavDropdown>
                 )}
+
               </Nav>
             </Offcanvas.Body>
           </Navbar.Offcanvas>

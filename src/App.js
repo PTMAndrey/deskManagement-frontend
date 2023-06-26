@@ -16,6 +16,7 @@ import Login from "./pagini/Login/Login";
 import Profil from "./pagini/Profil/Profil";
 import BirouriEtaj from "./componente/BirouriEtaj/BirouriEtaj";
 import useAuth from "./hooks/useAuth";
+import Utilizatori from "./pagini/Utilizatori/Utilizatori";
 
 function App() {
   const { width } = useWindowDimensions();
@@ -38,6 +39,7 @@ function App() {
           <Route path="/" element={<PaginaPrincipala />} />
           <Route path="/profil" element={<Profil />} />
           <Route path="/birouri" element={<BirouriEtaj rolComponenta={user?.rol === 'Admin' ? "admin" : "client" } />} />
+          <Route path="/utilizatori" element={<Utilizatori />} />
 
         </Route>
 

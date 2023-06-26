@@ -46,6 +46,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
     const [deskID, setDeskID] = useState(null);
     const [editBirou, setEditBirou] = useState(false);
     const [addBirou, setAddBirou] = useState(false);
+    const [isFetched, setIsFetched] = useState(false);
     const navigate = useNavigate();
 
     const [openPopup, setOpenPopup] = useState(false);
@@ -63,55 +64,6 @@ const BirouriEtaj = ({ rolComponenta }) => {
         setModal(!modal);
     };
 
-
-    useEffect(() => {
-        fetchBirouri();
-    }, [])
-
-
-    useEffect(() => {
-        fetchBirouri();
-    }, [etaj])
-
-
-    const fetchBirouri = async () => {
-        try {
-            const response = await getBirouriPeEtaj(etaj.value);
-            if (response.status === 200) {
-                console.log(response.data);
-                const birouriNoi = response.data.map((birou, index) => {
-                    const isDeskReserved = birou.reservari.some(
-                        (rezervare) =>
-                            rezervare?.idBirou === birou?.id && rezervare?.idPersoana === user?.id
-                    );
-                    console.log(isDeskReserved);
-                    const src = isDeskReserved ? pcRezervat : pc;
-                    console.log(src);
-
-                    return {
-                        etaj: birou.etaj,
-                        id: birou.id,
-                        src:src,
-                        x: birou.coordX,
-                        y: birou.coordY,
-                        camera: birou.camera,
-                        rezervari: birou.reservari,
-                    };
-                });
-
-                response.data.map((birou, index) =>
-                    stageRef.current.setPointersPositions({
-                        x: birou.coordX,
-                        y: birou.coordY,
-                    })
-                );
-                setBirouri(birouriNoi);
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
     function isPointInPolygon(point, polygon) {
         let inside = false;
         for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -128,35 +80,83 @@ const BirouriEtaj = ({ rolComponenta }) => {
         return inside;
     }
 
+    useEffect(() => {
+        fetchBirouri();
+    }, [])
+
+
+    useEffect(() => {
+        fetchBirouri();
+    }, [etaj])
+
+
+    const fetchBirouri = async () => {
+        try {
+            const response = await getBirouriPeEtaj(etaj.value);
+            if (response.status === 200) {
+                const birouriNoi = response.data.map((birou, index) => {
+                    const isDeskReserved = birou.reservari.some(
+                        (rezervare) =>
+                            rezervare?.idBirou === birou?.id && rezervare?.idPersoana === user?.id
+                    );
+                    const src = isDeskReserved ? pcRezervat : pc;
+                    response.data.length > 0 && setIsFetched(true);
+
+                    return {
+                        etaj: birou.etaj,
+                        id: birou.id,
+                        src: src,
+                        x: birou.coordX,
+                        y: birou.coordY,
+                        camera: birou.camera,
+                        rezervari: birou.reservari,
+                    };
+                });
+
+                response.data.map((birou, index) =>
+                    stageRef.current.setPointersPositions({
+                        x: birou.coordX,
+                        y: birou.coordY,
+                    })
+                );
+                setBirouri(birouriNoi);
+            }
+        } catch (error) {
+            setIsFetched(false);
+            console.log(error);
+        }
+    }
     const [addToUpdateBirouri, setAddToUpdateBirouri] = useState([]);
 
     const handleDrop = (e) => {
+        console.log('isFetched drop = ', isFetched);
         e.preventDefault();
         // register event position
         stageRef.current.setPointersPositions(e);
-        console.log(stageRef.current.getPointerPosition());
 
         const point = stageRef.current.getPointerPosition();
-
-        // add image
-        setBirouri([
-            ...birouri,
-            {
-                etaj: etaj.value,
-                ...stageRef.current.getPointerPosition(),
-                src: dragUrl.current,
-                id,
-                camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
-            }
-        ]);
-        if (birouri.length > 0) {
+        let idd = id;
+        // add birou
+        if (isFetched === false) {
+            setBirouri([
+                ...birouri,
+                {
+                    etaj: etaj.value,
+                    ...stageRef.current.getPointerPosition(),
+                    src: dragUrl.current,
+                    id: idd,
+                    camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
+                }
+            ]);
+        }
+        if (isFetched === true) {
             setAddToUpdateBirouri([
                 ...addToUpdateBirouri,
                 {
                     etaj: etaj.value,
                     ...stageRef.current.getPointerPosition(),
                     src: dragUrl.current,
-                    id,
+                    id: idd,
                     camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
                 }
             ]);
@@ -166,22 +166,35 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
     const dragHandle = (e) => {
 
-        console.log(typeof (e.target.x()));
-
         const point = { x: e.target.x(), y: e.target.y() };
-        console.log(point);
-        setBirouri(
-            birouri.map((img) => {
-                if (img.id === e.target.attrs.id) {
-                    return {
-                        ...img, x: e.target.x(), y: e.target.y(),
-                        camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
-                    };
-                }
+        if (isFetched === true) {
+            setBirouri(
+                birouri.map((birou) => {
+                    if (birou.id === e.target.attrs.id) {
+                        return {
+                            ...birou, x: e.target.x(), y: e.target.y(),
+                            camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
+                        };
+                    }
 
-                return img;
-            })
-        );
+                    return birou;
+                })
+            );
+        }
+        if (addToUpdateBirouri.length > 0) {
+            setAddToUpdateBirouri(
+                addToUpdateBirouri.map((birou) => {
+                    if (birou.id === e.target.attrs.id) {
+                        return {
+                            ...birou, x: e.target.x(), y: e.target.y(),
+                            camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
+                        };
+                    }
+
+                    return birou;
+                })
+            );
+        }
     };
 
 
@@ -200,7 +213,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
                 setAlert({ type: 'success', message: 'Birouri adaugate cu succes!' });
                 setEditBirou(false);
                 setAddBirou(false);
-                window.location.reload(false);
+                // window.location.reload(false);
             } catch (err) {
                 // Handle errors here
                 console.error('An error occurred:', err);
@@ -213,7 +226,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
     const handleUpdateBirouriAdmin = async () => {
         try {
-            const updatedBirouri = birouri.map(birou => ({
+            let updatedBirouri = birouri.map(birou => ({
                 ...birou,
                 coordX: birou.x,
                 coordY: birou.y,
@@ -221,13 +234,24 @@ const BirouriEtaj = ({ rolComponenta }) => {
                 y: undefined
             }));
 
-            console.log(birouri, '\n', updatedBirouri);
+            updatedBirouri = updatedBirouri.concat(addToUpdateBirouri.map(birou => ({
+                ...birou,
+                coordX: birou.x,
+                coordY: birou.y,
+                x: undefined,
+                y: undefined
+            })));
+
+            console.log(updatedBirouri);
+
             const response = await updateBirouri(updatedBirouri)
             try {
                 setEditBirou(false);
                 setAlert({ type: 'success', message: 'Birouri actualizate cu succes!' });
                 setEditBirou(false);
                 setAddBirou(false);
+                fetchBirouri();
+                // window.location.reload(false);
             } catch (err) {
                 // Handle errors here
                 console.error('An error occurred:', err);
@@ -250,6 +274,9 @@ const BirouriEtaj = ({ rolComponenta }) => {
                 setDeskID(null);
             }
             togglePopup();
+        }
+        else {
+            setIsFetched(false);
         }
     }
     const handleEditBirouri = () => {
@@ -375,16 +402,32 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
                                     </Html>
 
-                                    {birouri.map((image, i) => {
+                                    {birouri.map((birou, i) => {
                                         return (
                                             <Img
                                                 style={{
                                                     zIndex: 125,
                                                 }}
-                                                image={image}
+                                                image={birou}
                                                 key={i}
                                                 onDragEnd={dragHandle}
-                                                id={image.id}
+                                                id={birou.id}
+                                                isDraggable={'true'}
+                                                className={styles.itemOnClick}
+                                                onClick={(e) => { console.log("ASASA", e.target.attrs.id); togglePopup(); setDeskID(e.target.attrs.id) }}
+                                            />
+                                        );
+                                    })}
+                                    {addToUpdateBirouri.length > 0 && addToUpdateBirouri.map((birou, i) => {
+                                        return (
+                                            <Img
+                                                style={{
+                                                    zIndex: 125,
+                                                }}
+                                                image={birou}
+                                                key={i}
+                                                onDragEnd={dragHandle}
+                                                id={birou.id}
                                                 isDraggable={'true'}
                                                 className={styles.itemOnClick}
                                                 onClick={(e) => { console.log("ASASA", e.target.attrs.id); togglePopup(); setDeskID(e.target.attrs.id) }}
@@ -439,6 +482,23 @@ const BirouriEtaj = ({ rolComponenta }) => {
                                             image={image}
                                             key={i}
                                             id={image.id}
+                                            className={styles.itemOnClick}
+                                            isDraggable={'false'}
+                                            onClick={(e) => { console.log('PL', e.target.id); toggleModal(); setDeskID(e.target.attrs.id) }}
+                                        />
+
+                                    );
+                                })}
+
+                                {addToUpdateBirouri.length > 0 && addToUpdateBirouri.map((birou, i) => {
+                                    return (
+                                        <Img
+                                            style={{
+                                                zIndex: 125,
+                                            }}
+                                            image={birou}
+                                            key={i}
+                                            id={birou.id}
                                             className={styles.itemOnClick}
                                             isDraggable={'false'}
                                             onClick={(e) => { console.log('PL', e.target.id); toggleModal(); setDeskID(e.target.attrs.id) }}

@@ -7,9 +7,7 @@ import useWindowDimensions from '../../hooks/useWindowDimensions';
 import { ReactComponent as Add } from '../../assets/icons/add.svg';
 import { RiDeleteBinFill } from 'react-icons/ri';
 import { useDropzone } from 'react-dropzone';
-import Button from '../../componente/Buton/Buton'
 
-import { detectOverflow } from '@popperjs/core'
 import { styled } from '@mui/material/styles';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -238,52 +236,6 @@ const Profil = () => {
                         <Row>
                             <h3>Rezervările mele</h3>
                         </Row>
-                        {/* {user.rezervari?.map((obj, ind) => {
-                            <Row key={ind} className={styles.rezervareProfil}>
-                                <Col className={styles.rezervareTextProfil}>
-                                    [{ind}].
-                                    <b>
-                                        {formValue.oraInceput} - {formValue.oraIncheiere}
-                                    </b>
-                                </Col>
-                                <Col style={{ width: '1%!important' }}></Col>
-                                <Button
-                                    label="Rezerva"
-                                    className={styles.rezervaBirouriLibere}
-                                    onClick={() => {
-                                        // setDeskID(obj.id);
-                                        // toggleModalConfirmareRezervare();
-                                    }}
-                                />
-                            </Row>
-                        })} */}
-
-                        {/* <TableContainer component={Paper}>
-                        <Table sx={{ minWidth: 700 }} aria-label="customized table">
-                            <TableHead>
-                                <TableRow>
-                                    <StyledTableCell align="center">Dessert (100g serving)</StyledTableCell>
-                                    <StyledTableCell align="center">Calories</StyledTableCell>
-                                    <StyledTableCell align="center">Fat&nbsp;(g)</StyledTableCell>
-                                    <StyledTableCell align="center">Carbs&nbsp;(g)</StyledTableCell>
-                                    <StyledTableCell align="center">Protein&nbsp;(g)</StyledTableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {rows.map((row) => (
-                                    <StyledTableRow key={row.name}>
-                                        <StyledTableCell align='center'>
-                                            {row.name}
-                                        </StyledTableCell>
-                                        <StyledTableCell align="center">{row.calories}</StyledTableCell>
-                                        <StyledTableCell align="center">{row.fat}</StyledTableCell>
-                                        <StyledTableCell align="center">{row.carbs}</StyledTableCell>
-                                        <StyledTableCell align="center">{row.protein}</StyledTableCell>
-                                    </StyledTableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer> */}
 
                         <TableContainer component={Paper}>
                             <Table sx={{ minWidth: 500 }} aria-label="custom pagination customized table">
@@ -304,7 +256,7 @@ const Profil = () => {
                                         : rows[0]
                                     )?.map((row, index) => (
                                         <TableRow key={index}>
-                                            <TableCell component="th" scope="row">
+                                            <TableCell component="th" scope="row" style={{ width: 160 }} align="center">
                                                 {index + 1}
                                             </TableCell>
                                             <TableCell style={{ width: 160 }} align="center">

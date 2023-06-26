@@ -24,6 +24,27 @@ export const login = async (email, password) => {
   }
 };
 
+
+export const getAllUsers = async (id) => {
+  try {
+    const response = await axios.get("/persoana/get/all");
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+export const deleteUser = async (id) => {
+  try {
+    const response = await axios.get("/persoana/delete/" + id);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
 // get user by id
 export const getUserById = async (id) => {
   try {
