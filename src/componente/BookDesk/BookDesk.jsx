@@ -1,19 +1,37 @@
 import React, { useEffect, useState } from 'react'
 import styles from './BookDesk.module.scss'
 import Dropdown from '../Dropdown/Dropdown'
-import {Col, Row } from 'react-bootstrap'
+import { Col, Row } from 'react-bootstrap'
 import Input from '../Input/Input';
-import { getBirouriLiberePeEtaj } from '../../api/API'
+import { getBirouriLiberePeEtaj, getIsBirouFree, rezervaBirou } from '../../api/API'
 import useStateProvider from '../../hooks/useStateProvider';
 import Button from '../Buton/Buton'
-import {RiUserSearchLine} from 'react-icons/ri'
+import useAuth from '../../hooks/useAuth';
+
+import moment from 'moment';
+import 'moment/locale/ro';
+import FiltreCautareBirou from './FiltreCautareBirou';
+import {
+  MDBBtn,
+  MDBModal,
+  MDBModalDialog,
+  MDBModalContent,
+  MDBModalHeader,
+  MDBModalTitle,
+  MDBModalBody
+} from 'mdb-react-ui-kit';
+import { HiViewList } from 'react-icons/hi'
 
 const BookDesk = (props) => {
 
   const [showErrors, setShowErrors] = useState(false);
-
+  const { userID, fetchUser } = useAuth();
   const { setAlert } = useStateProvider();
   const [birouriDisponibile, setBirouriDisponibile] = useState(null);
+  const [raspunsRezervareBirou, setRaspunsRezervareBirou] = useState(null);
+  const [selectedValue, setSelectedValue] = useState(null);
+  const [deskID, setDeskID] = useState(null);
+  const [modal, setModal] = useState(null);
 
   const transformDate = (e) => {
     return (e.getFullYear() + '-' + ((e.getMonth() + 1) < 10 ? ('0' + String(e.getMonth() + 1)) : (e.getMonth() + 1)) + '-' + ((e.getDate() < 10 ? '0' + String(e.getDate()) : e.getDate())));
@@ -29,8 +47,8 @@ const BookDesk = (props) => {
 
   // --------------------------------------- Default data ------------------------------------------
 
-  const [ora1, setOra1] = useState('');
-  const [ora2, setOra2] = useState('');
+  const [ora1, setOra1] = useState(null);
+  const [ora2, setOra2] = useState(null);
   const [firstInterval, setFirstInterval] = useState([]);
   const [secondInterval, setSecondInterval] = useState([]);
 
@@ -90,7 +108,7 @@ const BookDesk = (props) => {
   // check errors
   const checkErrors = (field) => {
 
-    if (field === 'etaj') {
+    if (field === 'etaj' && props.rol === 'cautaBirou') {
       if (!formValue.etaj)
         return 'Selectarea etajului este obligatorie';
     }
@@ -143,10 +161,19 @@ const BookDesk = (props) => {
       }
       if (isFormValid()) {
         setShowErrors(false);
-        const response = await getBirouriLiberePeEtaj(formValue);
-        if (response.status === 200) {
-          console.log(response.data);
-          setBirouriDisponibile(response.data);
+        if (props.rol === 'cautaBirou') {
+          const response = await getBirouriLiberePeEtaj(formValue);
+          if (response.status === 200) {
+            setBirouriDisponibile(response.data.sort((a, b) => a.camera - b.camera));
+            setSelectedValue(null);
+          }
+        }
+        if (props.rol === 'rezervareBirou') {
+          console.log(props.idBirou)
+          const response = await getIsBirouFree(props.idBirou, formValue);
+          if (response.status === 200) {
+            setRaspunsRezervareBirou(response.data);
+          }
         }
       }
     } catch (e) {
@@ -154,117 +181,148 @@ const BookDesk = (props) => {
     }
   }
 
+  const handleRezervaAcum = async (id) => {
+    try {
+      console.log(formValue);
+      const response = await rezervaBirou(id ? id : props.idBirou, userID, formValue);
+      if (response.status === 200) {
+
+        if (props.rol === 'rezervareBirou') {
+          props.toggleModal();
+          props.fetchBirouri();
+        }
+        if (props.rol === 'cautaBirou') {
+          handleSearch();
+
+          fetchUser();
+        }
+        setAlert({ type: 'success', message: 'Rezervare efectuata cu succes!' });
+      }
+    } catch (error) {
+      console.log(e);
+    }
+  }
+
+  const uniqueValues = [...new Set(birouriDisponibile?.map(obj => obj.camera))];
+
+  const handleChange = (item) => {
+    console.log(item)
+    if (item === 'noValue')
+      setSelectedValue(null)
+    else
+      setSelectedValue(item);
+  }
+
+
+  const toggleModalConfirmareRezervare = () => {
+    setModal(!modal);
+  };
+
+
   return (
     <div className={styles.bookDeskContainer}>
       <Row className={styles.bookDeskBody}>
-        <Col>
-          <p className={styles.label}>Etaj</p>
-          <Dropdown
-            className='mt-4'
-            name='etaj'
-            title={'Etaj'}
-            options={etaje}
-            onChange={(e) => {
-              setFormValue({ ...formValue, etaj: e.value })
-            }}
-            error={showErrors && checkErrors('etaj') ? true : false}
-            helper={showErrors ? checkErrors('etaj') : ''}
-          />
-        </Col>
-        <Col>
-          <p className={styles.label}>Ziua</p>
-
-          <Input
-            id="data"
-            type='date'
-            name='ziuaCautare'
-            onChange={(e) => {
-              !e.target.valueAsDate ?
-                setFormValue({ ...formValue, ziuaCautare: '' })
-                :
-                setFormValue({ ...formValue, ziuaCautare: transformDate(e.target.valueAsDate) })
-            }}
-            min={dataAzi}
-            // readOnly
-            required
-            error={showErrors && checkErrors('ziuaCautare') ? true : false}
-            helper={showErrors ? checkErrors('ziuaCautare') : ''}
-          />
-        </Col>
-        <Col>
-          <p className={styles.label}>Ora de inceput</p>
-          <Dropdown
-            title={!ora1 ? 'Alege ora' : ora1}
-            options={firstInterval}
-            className='mt-4'
-            // searchable={width < 750 ? false : true}
-            onChange={(e) => {
-              setFormValue({ ...formValue, oraInceput: e.value + ':00' })
-              setOra1(e.value);
-              setOra2(null);
-            }}
-            error={showErrors && checkErrors('oraInceput') ? true : false}
-            helper={showErrors ? checkErrors('oraInceput') : ''}
-          />
-          {/* <Dropdown
-            title={!formValue?.oraInceput ? 'Alege ora' : formValue?.oraInceput}
-            options={firstInterval.filter(option => option.value)}
-            className='mt-4'
-            onChange={(e) => {
-              setFormValue({ ...formValue, oraInceput: e.value + ':00' })
-              setOra1(Number(e.value));
-            }}
-            error={showErrors && checkErrors('oraIncheiere') ? true : false}
-            helper={showErrors ? checkErrors('oraIncheiere') : ''}
-          /> */}
-        </Col>
-        <Col>
-          <p className={styles.label}>Ora incheiere</p>
-          <Dropdown
-            title={!ora2 ? 'Alege ora' : Number(ora1) >= Number(ora2) ? "Alege ora" : ora2}
-            options={secondInterval}
-            className='mt-4'
-            // searchable={width < 750 ? false : true}
-            onChange={(e) => {
-              setFormValue({ ...formValue, oraIncheiere: e.value + ':00' })
-              setOra2(e.value);
-            }}
-            error={showErrors && checkErrors('oraIncheiere') ? true : false}
-            helper={showErrors ? checkErrors('oraIncheiere') : ''}
-          />
-          {/* 
-          <Dropdown
-            title={!formValue?.oraIncheiere ? 'Alege ora' : formValue?.oraIncheiere}
-            options={secondInterval.filter(option => option.value)}
-            className='mt-4'
-            onChange={(e) => {
-              setFormValue({ ...formValue, oraIncheiere: e.value + ':00' })
-            }}
-            error={showErrors && checkErrors('oraIncheiere') ? true : false}
-            helper={showErrors ? checkErrors('oraIncheiere') : ''}
-          /> */}
-
-        </Col>
-
-        <Col>
-          <Button variant="tertiary" className='mt-4 rounded-pill' label="Cauta" border={false} iconRol='search' position='left' onClick={() => handleSearch()}/>
-        </Col>
-
+        <FiltreCautareBirou handleSearch={handleSearch} rolComponenta={props.rol} dataAzi={dataAzi} firstInterval={firstInterval} secondInterval={secondInterval} formValue={formValue} etaje={etaje} setFormValue={setFormValue} transformDate={transformDate} showErrors={showErrors} checkErrors={checkErrors} setRaspunsRezervareBirou={setRaspunsRezervareBirou} ora1={ora1} setOra1={setOra1} ora2={ora2} setOra2={setOra2} />
       </Row>
-      <Row>
 
-        { (birouriDisponibile && formValue.ziuaCautare)  && <>
-          {console.log(birouriDisponibile)}
-          {birouriDisponibile.map((birou, index) => (
-            <div key={index}>
-              <p>Biroul {birou.numar} este disponibil in intervalul [ {formValue.oraInceput} - {formValue.oraIncheiere} ] la data de {formValue.ziuaCautare}</p>
-            </div>)
-          )}
-        </>}
-        {birouriDisponibile?.length === 0 &&
-        <>
-        <p>Nu exista birouri disponibile</p>
-        </>}
+      <Row>
+        {props.rol === 'cautaBirou' &&
+          <>
+            {(birouriDisponibile && formValue.ziuaCautare) &&
+              <>
+                <Row>
+                  <p>Ziua aleasa: {moment(formValue.ziuaCautare, 'YYYY-MM-DD').format('DD MMMM YYYY')}</p>
+                </Row>
+                <div>
+                  {uniqueValues?.map((item, ind) => (
+                    <Row key={item} className={styles.camereBirouriLibere} onClick={() => handleChange(item)}>
+                      <Col>
+                        <span><HiViewList /></span>
+                        <span>Camera {item}</span>
+                      </Col>
+                    </Row>
+                  ))}
+
+                  {selectedValue && (
+                    <div style={{ border: '1px solid gray !important' }}>
+                      {birouriDisponibile?.map((obj, ind) => {
+                        if (obj.camera === selectedValue) {
+                          return (
+                            <Row key={ind} className={styles.birouLiber}>
+                              <Col className={styles.birouLiberText}>
+                                Birou in camera {obj.camera} este disponibil in intervalul{' '}
+                                <b>
+                                  {formValue.oraInceput} - {formValue.oraIncheiere}
+                                </b>
+                              </Col>
+                              <Col style={{ width: '1%!important' }}></Col>
+                              <Button
+                                label="Rezerva"
+                                className={styles.rezervaBirouriLibere}
+                                onClick={() => {
+                                  setDeskID(obj.id);
+                                  toggleModalConfirmareRezervare();
+                                }}
+                              />
+                            </Row>
+                          );
+                        } else {
+                          return null; // Return null if the condition is not met
+                        }
+                      })}
+
+                    </div>
+                  )}
+                </div>
+              </>}
+            {birouriDisponibile?.length === 0 &&
+              <>
+                <p>Nu exista birouri disponibile</p>
+              </>}
+          </>
+        }
+        {props.rol === 'rezervareBirou' && raspunsRezervareBirou === true &&
+          <>
+            <Col>
+              <p>Biroul este disponibil</p>
+            </Col>
+            <Col>
+              <Button variant="tertiary" className='mt-4 rounded-pill' label='Rezerva acum' border={false} iconRol='search' position='left' onClick={() => handleRezervaAcum()} />
+            </Col>
+          </>
+        }
+        {props.rol === 'rezervareBirou' && raspunsRezervareBirou === false &&
+          <>
+            <Col>
+              <p style={{ color: 'red' }}>Biroul nu este disponibil la aceasta data</p>
+            </Col>
+          </>
+        }
+
+        {
+          modal && (
+            <MDBModal show={modal} tabIndex='-1' setShow={setModal}>
+              <MDBModalDialog size="lg">
+                <MDBModalContent>
+                  <MDBModalHeader>
+                    <MDBModalTitle>Confirmare</MDBModalTitle>
+                    <MDBBtn className='btn-close' color='none' onClick={() => { toggleModalConfirmareRezervare(); setDeskID(null) }}></MDBBtn>
+                  </MDBModalHeader>
+                  <MDBModalBody>
+                    <p>Doriți să rezervați acest birou?</p>
+                    <div className='d-flex justify-items-space-between align-items-center'>
+                      <MDBBtn color='danger' onClick={() => { handleRezervaAcum(deskID); toggleModalConfirmareRezervare(); setDeskID(null) }}>Da</MDBBtn>
+
+                      <MDBBtn color='info' onClick={() => { toggleModalConfirmareRezervare(); setDeskID(null) }}>Nu</MDBBtn>
+                    </div>
+                  </MDBModalBody>
+                </MDBModalContent>
+              </MDBModalDialog>
+            </MDBModal>
+          )
+        }
+
+
       </Row>
     </div>
   )

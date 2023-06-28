@@ -23,7 +23,7 @@ const Buton = ({
       {
         iconRol === 'search' ?  <RiUserSearchLine/> : null
       }
-
+      <span className={styles.label}> {icon} </span>
       <span className={styles.label}>{label}</span>
     </button>
   );

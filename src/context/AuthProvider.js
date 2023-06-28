@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }) => {
   // logout function
   function logout() {
     sessionStorage.clear();
-    setRememberMe(false);
     sessionStorage.removeItem("userID");
     localStorage.removeItem("userID");
     setUser(null);

@@ -1,0 +1,130 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+
+.containerProfil {
+    width: 100%;
+    min-height: 33rem;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 100%;
+    margin: 0 auto 32px auto;
+    // padding: 32px;
+
+    @include responsive_W550px {
+        justify-content: center;
+        // flex-direction: row;
+    }
+}
+
+.profilBody {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+
+}
+
+.cardProfil {
+    display: flex;
+    flex-direction: row !important;
+    background-color: $color-gray-100 !important;
+}
+
+.cardList {
+    background-color: $color-gray-100 !important;
+}
+
+.imageZone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.imgProfile {
+    width: 150px !important;
+    height: 150px !important;
+    border: 2px solid $color-yellow !important;
+    padding: 10px !important;
+    margin: 20px;
+    float: left;
+    min-width: 90px;
+    object-fit: cover;
+}
+
+.profileList {
+    color: $color-gray-600 !important;
+}
+
+@include responsive_W550px {
+
+    .imgProfile {
+        width: 100% !important;
+        height: 200px !important;
+        border: 2px solid $color-yellow !important;
+        padding: 10px !important;
+        margin-right: 20px;
+        float: left;
+    }
+
+}
+
+.previzualizarePoza {
+    display: flex;
+    flex-direction: column;
+
+    img {
+        height: 128px;
+        width: 164px;
+        background-color: $color-gray-50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        object-fit: cover;
+    }
+
+    svg {
+        width: 100%;
+        cursor: pointer;
+    }
+}
+
+
+.profilRezervari {
+    margin-top: 10%;
+}
+
+
+.rezervareProfil {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    flex-direction: row;
+    margin-top: 30px !important;
+
+    .rezervareTextProfil {
+
+        border-bottom: 1px solid $color-gray-300 !important;
+    }
+
+    .rezervaBirouriLibere {
+        width: 20%;
+    }
+}
+
+
+.buttonsModal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    button {
+        height: 30px;
+        width: 120px;
+    }
+}
