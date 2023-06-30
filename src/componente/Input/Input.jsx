@@ -20,6 +20,7 @@ const Input = ({
   helper,
   disabled,
   min,
+  max,
   pattern,
   title,
   clearable,
@@ -44,6 +45,7 @@ const Input = ({
         type={type}
         pattern={pattern}
         min={min}
+        max={max}
         checked={checked}
         readOnly={readOnly}
       />
@@ -82,6 +84,7 @@ Input.propTypes = {
   helper: PropTypes.string,
   disabled: PropTypes.bool,
   min: PropTypes.string,
+  max: PropTypes.string,
   title: PropTypes.string,
   pattern: PropTypes.string,
   clearable: PropTypes.bool,
@@ -105,6 +108,7 @@ Input.defaultProps = {
   helper: "",
   disabled: false,
   min: '',
+  max: '',
   clearable: false,
   onIconClear:  () => { },
   checked: false,

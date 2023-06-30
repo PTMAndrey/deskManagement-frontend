@@ -242,8 +242,6 @@ const BirouriEtaj = ({ rolComponenta }) => {
                 y: undefined
             })));
 
-            console.log(updatedBirouri);
-
             const response = await updateBirouri(updatedBirouri)
             try {
                 setEditBirou(false);
@@ -266,7 +264,6 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
     const handleStergeBirouriAdmin = () => {
         if (birouri.length > 0) {
-            console.log(deskID);
             if (!deskID) {
                 setBirouri(birouri.slice(0, -1));
             } else {

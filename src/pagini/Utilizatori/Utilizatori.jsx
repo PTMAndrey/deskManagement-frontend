@@ -21,7 +21,7 @@ import useStateProvider from '../../hooks/useStateProvider';
 import { ReactComponent as Add } from '../../assets/icons/add.svg';
 import { ReactComponent as Edit } from '../../assets/icons/edit.svg';
 import { RiDeleteBinFill } from 'react-icons/ri';
-import { getAllUsers } from '../../api/API';
+import { addUser, deleteUser, getAllUsers, getUserById, updateUser } from '../../api/API';
 import moment from 'moment';
 import 'moment/locale/ro';
 import Buton from '../../componente/Buton/Buton'
@@ -38,33 +38,79 @@ import {
 import styles from './Utilizatori.module.scss';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import { Col } from 'react-bootstrap';
+import Input from '../../componente/Input/Input';
 
 const Utilizatori = () => {
     const navigate = useNavigate();
-    const {user} = useAuth();
+    const { user, fetchUser } = useAuth();
 
     useEffect(() => {
-      if(user?.rol !== 'Admin' && user)
-        navigate('/');
+        if (user?.rol !== 'Admin' && user)
+            navigate('/');
     }, [user])
-    
+
 
     const { setAlert } = useStateProvider();
-    const [modalDelete, setModalDelete] = useState(false);
-    const [modalEdit, setModalEdit] = useState(false);
+    const [modal, setModal] = useState(null);
+    const [modalDelete, setModalDelete] = useState(null);
+    const [modalAddEdit, setModalAddEdit] = useState(false);
+    const [selectedUserID, setSelectedUserID] = useState(null);
     const [useri, setUseri] = useState([]);
+    const [showErrors, setShowErrors] = useState(false);
+    const [dataNasterii, setDataNasterii] = useState("");
+
+    const [formValue, setFormValue] = useState({
+        id: '',
+        nume: '',
+        prenume: '',
+        email: '',
+        parola: '',
+        departament: '',
+        rol: '',
+        nume_proiect: '',
+        manager: '',
+        tara: '',
+        oras: '',
+        nationalitate: '',
+        dataNasterii: '',
+    });
+
+
+    const getUser = (id) => {
+        const response = useri.find(obj => obj.id === id);
+        setFormValue({
+            id: response.id,
+            nume: response.nume,
+            prenume: response.prenume,
+            email: response.email,
+            parola: response.parola,
+            departament: response.departament,
+            rol: response.rol,
+            nume_proiect: response.nume_proiect,
+            manager: response.manager,
+            tara: response.tara,
+            oras: response.oras,
+            nationalitate: response.nationalitate,
+            dataNasterii: response.dataNasterii,
+        });
+        setDataNasterii(moment(response.dataNasterii, 'YYYY-MM-DD').toDate());
+
+        toggleModalAddEdit();
+    };
+
 
 
     const toggleModalDelete = () => {
         setModalDelete(!modalDelete);
     };
-    const toggleModalEdit = () => {
-        setModalEdit(!modalEdit);
+    const toggleModalAddEdit = () => {
+        setModalAddEdit(!modalAddEdit);
     };
 
     useEffect(() => {
-        fetchRezervari();
-    }, [useri]);
+        fetchUseri();
+    }, []);
 
 
 
@@ -80,14 +126,12 @@ const Utilizatori = () => {
         )
     ];
 
-
-
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
     // Avoid a layout jump when reaching the last page with empty rows.
     const emptyRows =
-        page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+        page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows[0].length) : 0;
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -98,7 +142,7 @@ const Utilizatori = () => {
         setPage(0);
     };
 
-    const fetchRezervari = async () => {
+    const fetchUseri = async () => {
         try {
             const response = await getAllUsers();
             if (response.status === 200) {
@@ -109,17 +153,121 @@ const Utilizatori = () => {
         }
     }
 
+    console.log(useri);
+
+    const transformDate = (e) => {
+        return (e.getFullYear() + '-' + ((e.getMonth() + 1) < 10 ? ('0' + String(e.getMonth() + 1)) : (e.getMonth() + 1)) + '-' + ((e.getDate() < 10 ? '0' + String(e.getDate()) : e.getDate())));
+    }
+
+    // handleChange
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormValue((prev) => {
+            return { ...prev, [name]: value };
+        });
+    };
+
+    // check errors
+    const checkErrors = (field) => {
+
+        if (field === 'etaj') {
+            if (!formValue.etaj)
+                return 'Selectarea etajului este obligatorie';
+        }
+
+        return '';
+    };
+
+
+    const isFormValid = () => {
+        let isValid = true;
+        Object.keys(formValue).forEach((field) => {
+            if (checkErrors(field)) {
+                isValid = false;
+            }
+        });
+        return isValid;
+    };
+
+    const handleDeleteUser = async () => {
+        try {
+            const response = await deleteUser(selectedUserID);
+            if (response?.status === 200) {
+                setAlert({ type: 'success', message: 'Cont eliminat cu succes' });
+                setSelectedUserID(null);
+                toggleModalDelete();
+                fetchUseri();
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const handleAddEdit = async () => {
+        try {
+            let resp;
+            if (modal === 'add')
+                resp = await addUser(formValue);
+            if (modal === 'edit')
+                resp = await updateUser(formValue);
+            if (resp?.status === 200) {
+                if (modal === 'add') {
+
+                    setAlert({
+                        type: "success",
+                        message: "Contul a fost adaugat cu succes",
+                    });
+                    fetchUseri();
+                    toggleModalAddEdit();
+                    setModal('');
+                }
+                if (modal === 'edit') {
+
+                    setAlert({
+                        type: "success",
+                        message: "Contul a fost modificat cu succes",
+                    });
+                    fetchUseri();
+                    toggleModalAddEdit();
+                    setModal('');
+                }
+
+            }
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const clearForm = () => {
+        setFormValue({
+            id: '',
+            nume: '',
+            prenume: '',
+            email: '',
+            parola: '',
+            departament: '',
+            rol: '',
+            nume_proiect: '',
+            manager: '',
+            tara: '',
+            oras: '',
+            nationalitate: '',
+            dataNasterii: '',
+        });
+    }
+
     return (
         <div className={styles.containerUseri}>
             <div className={styles.useriBody}>
-                <Buton variant="tertiary" label='Adaugă' icon={<Add/>} className={`${styles.width40} mb-5`}/>
+                <Buton variant="tertiary" label='Adaugă' icon={<Add />} className={`${styles.width40} mb-5`} onClick={() => { setModal('add'); clearForm(); toggleModalAddEdit(); }} />
                 <TableContainer component={Paper}>
                     <Table sx={{ minWidth: 500 }} aria-label="custom pagination customized table">
                         <TableHead>
                             <TableRow>
                                 <StyledTableCell align="center">Nr. crt.</StyledTableCell>
                                 <StyledTableCell align="center">Nume</StyledTableCell>
-                                <StyledTableCell align="center">Prenume</StyledTableCell>
+                                <StyledTableCell align="center">Parola</StyledTableCell>
                                 <StyledTableCell align="center">Email</StyledTableCell>
                                 <StyledTableCell align="center">Departament</StyledTableCell>
                                 <StyledTableCell align="center">Rol</StyledTableCell>
@@ -159,12 +307,19 @@ const Utilizatori = () => {
                                         {row?.manager}
                                     </TableCell>
                                     <TableCell style={{ width: 160 }} align="center">
-                                        <RiDeleteBinFill style={{ cursor: 'pointer' }} onClick={() => {
-                                            // handleDeleteRezervare(row?.id);
-                                        }} />
-                                        <br />
                                         <Edit style={{ cursor: 'pointer' }} onClick={() => {
                                             // handleDeleteRezervare(row?.id);
+                                            setSelectedUserID(row?.id);
+                                            getUser(row?.id);
+                                            setModal('edit');
+
+                                        }} />
+                                        <br />
+                                        <br />
+                                        <RiDeleteBinFill style={{ cursor: 'pointer' }} onClick={() => {
+                                            // handleDeleteRezervare(row?.id);
+                                            setSelectedUserID(row?.id);
+                                            toggleModalDelete();
                                         }} />
                                     </TableCell>
                                 </TableRow>
@@ -181,7 +336,7 @@ const Utilizatori = () => {
                                 <TablePagination
                                     rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
                                     colSpan={5}
-                                    count={rows.length}
+                                    count={rows[0].length}
                                     rowsPerPage={rowsPerPage}
                                     page={page}
                                     SelectProps={{
@@ -215,9 +370,9 @@ const Utilizatori = () => {
                                     <p>Această acțiune este ireversibilă! </p>
                                     {
                                         <div className={styles.buttonsModal}>
-                                            <MDBBtn size='sm' color='danger' onClick={() => { toggleModalDelete() }}>Actualizează</MDBBtn>
+                                            <MDBBtn size='sm' color='info' onClick={handleDeleteUser}>Șterge</MDBBtn>
 
-                                            <MDBBtn size='sm' color='info' onClick={() => { toggleModalDelete(); }}>Anulează</MDBBtn>
+                                            <MDBBtn size='sm' color='danger' onClick={() => { toggleModalDelete(); setSelectedUserID(null) }}>Anulează</MDBBtn>
                                         </div>
                                     }
 
@@ -227,23 +382,204 @@ const Utilizatori = () => {
                     </MDBModal>
                 )
             }
-            
+
             {
-                modalEdit && (
-                    <MDBModal show={modalEdit} tabIndex='-1' setShow={setModalEdit}>
+                modalAddEdit && (
+                    <MDBModal show={modalAddEdit} tabIndex='-1' setShow={setModalAddEdit}>
                         <MDBModalDialog size="lg">
                             <MDBModalContent>
                                 <MDBModalHeader>
-                                    <MDBModalTitle>Schimba poza profil</MDBModalTitle>
-                                    <MDBBtn className='btn-close' color='none' onClick={toggleModalEdit}></MDBBtn>
+                                    <MDBModalTitle>Cont utilizator</MDBModalTitle>
+                                    <MDBBtn className='btn-close' color='none' onClick={toggleModalAddEdit}></MDBBtn>
                                 </MDBModalHeader>
                                 <MDBModalBody>
 
+                                    <Col>
+                                        <Input
+                                            label='Nume'
+                                            id="nume"
+                                            name='nume'
+                                            type='text'
+                                            disabled={modal === 'edit' ? true : false}
+                                            value={formValue.nume}
+                                            placeholder={'Nume'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('nume') ? true : false}
+                                            helper={showErrors ? checkErrors('nume') : ''}
+                                        />
+                                    </Col>
+
+                                    <Col>
+                                        <Input
+                                            label='Prenume'
+                                            id="prenume"
+                                            name='prenume'
+                                            disabled={modal === 'edit' ? true : false}
+                                            type='text'
+                                            value={formValue.prenume}
+                                            placeholder={'Prenume'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('prenume') ? true : false}
+                                            helper={showErrors ? checkErrors('prenume') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+                                        <Input
+                                            label='Email'
+                                            id="email"
+                                            name='email'
+                                            disabled={modal === 'edit' ? true : false}
+                                            type='text'
+                                            value={formValue.email}
+                                            placeholder={'Email'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('email') ? true : false}
+                                            helper={showErrors ? checkErrors('email') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+                                        <Input
+                                            label='Parola'
+                                            id="parola"
+                                            name='parola'
+                                            type='text'
+                                            value={formValue.parola}
+                                            placeholder={'Parola'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('parola') ? true : false}
+                                            helper={showErrors ? checkErrors('parola') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+                                        <Input
+                                            label='Departament'
+                                            id="departament"
+                                            name='departament'
+                                            type='text'
+                                            value={formValue.departament}
+                                            placeholder={'Departament'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('departament') ? true : false}
+                                            helper={showErrors ? checkErrors('departament') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+
+                                        <Input
+                                            label='Rol'
+                                            id="rol"
+                                            name='rol'
+                                            type='text'
+                                            value={formValue.rol}
+                                            placeholder={'Rol'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('rol') ? true : false}
+                                            helper={showErrors ? checkErrors('rol') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+                                        <Input
+                                            label='Proiect'
+                                            id="nume_proiect"
+                                            name='nume_proiect'
+                                            type='text'
+                                            value={formValue.nume_proiect}
+                                            placeholder={'Proiect'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('nume_proiect') ? true : false}
+                                            helper={showErrors ? checkErrors('nume_proiect') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+                                        <Input
+                                            label='Manager'
+                                            id="manager"
+                                            name='manager'
+                                            type='text'
+                                            value={formValue.manager}
+                                            placeholder={'Manager'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('manager') ? true : false}
+                                            helper={showErrors ? checkErrors('manager') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+                                        <Input
+                                            label='Tara'
+                                            id="tara"
+                                            name='tara'
+                                            type='text'
+                                            value={formValue.tara}
+                                            placeholder={'Tara'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('tara') ? true : false}
+                                            helper={showErrors ? checkErrors('tara') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+                                        <Input
+                                            label='Oras'
+                                            id="oras"
+                                            name='oras'
+                                            type='text'
+                                            value={formValue.oras}
+                                            placeholder={'Oras'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('oras') ? true : false}
+                                            helper={showErrors ? checkErrors('oras') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+                                        <Input
+                                            label='Nationalitate'
+                                            id="nationalitate"
+                                            name='nationalitate'
+                                            type='text'
+                                            value={formValue.nationalitate}
+                                            placeholder={'Nationalitate'}
+                                            onChange={handleChange}
+                                            required
+                                            error={showErrors && checkErrors('nationalitate') ? true : false}
+                                            helper={showErrors ? checkErrors('nationalitate') : ''}
+                                        />
+                                    </Col>
+                                    <Col>
+                                        <Input
+                                            label='Data nasterii'
+                                            id="dataNasterii"
+                                            name='dataNasterii'
+                                            type='date'
+                                            value={formValue.dataNasterii}
+                                            onChange={(e) => {
+                                                !e.target.valueAsDate ?
+                                                    setFormValue({ ...formValue, dataNasterii: '' })
+                                                    :
+                                                    setFormValue({ ...formValue, dataNasterii: transformDate(e.target.valueAsDate) });
+                                                setDataNasterii(transformDate(e.target.valueAsDate));
+                                            }}
+                                            min={'1930-1-1'}
+                                            max={'01-01-2011'}
+                                            required
+                                            error={showErrors && checkErrors('dataNasterii') ? true : false}
+                                            helper={showErrors ? checkErrors('dataNasterii') : ''}
+                                        />
+                                    </Col>
+                                    {/* </Col> */}
                                     {
                                         <div className={styles.buttonsModal}>
-                                            <MDBBtn size='sm' color='danger' onClick={() => { toggleModalEdit() }}>Actualizează</MDBBtn>
+                                            <MDBBtn size='sm' color='danger' onClick={handleAddEdit}>Salvează</MDBBtn>
 
-                                            <MDBBtn size='sm' color='info' onClick={() => { toggleModalEdit(); }}>Anulează</MDBBtn>
+                                            <MDBBtn size='sm' color='info' onClick={() => { toggleModalAddEdit(); setSelectedUserID(null) }}>Anulează</MDBBtn>
                                         </div>
                                     }
 
@@ -253,7 +589,8 @@ const Utilizatori = () => {
                     </MDBModal>
                 )
             }
-        </div>
+
+        </div >
     )
 }
 

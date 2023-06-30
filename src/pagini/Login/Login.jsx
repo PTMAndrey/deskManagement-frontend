@@ -51,8 +51,6 @@ const Login = () => {
     try {
       if (emailError === "" && pwdError === "") {
         if (pwd.length > 6) {
-          //setUser()
-          console.log(email,pwd);
           const response = await login(email, pwd);
           if (response) {
             setUser(response.data);

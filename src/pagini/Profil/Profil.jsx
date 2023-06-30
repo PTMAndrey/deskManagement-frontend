@@ -168,7 +168,7 @@ const Profil = () => {
 
     // Avoid a layout jump when reaching the last page with empty rows.
     const emptyRows =
-        page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+        page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows[0].length) : 0;
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -293,7 +293,7 @@ const Profil = () => {
                                         <TablePagination
                                             rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
                                             colSpan={5}
-                                            count={rows.length}
+                                            count={rows[0].length}
                                             rowsPerPage={rowsPerPage}
                                             page={page}
                                             SelectProps={{

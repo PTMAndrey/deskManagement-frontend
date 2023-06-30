@@ -34,10 +34,35 @@ export const getAllUsers = async (id) => {
   }
 };
 
+export const addUser = async (data) => {
+  try {
+    const response = await axios.post(
+      
+     '/persoana/inregistrare?nume='+data.nume+'&prenume='+data.prenume+'&email='+data.email+'&parola='+data.parola+'&departament='+data.departmanet+'&rol='+data.rol+'&nume_proiect='+data.nume_proiect+'&manager='+data.manager+'&tara='+data.tara+'&oras='+data.oras+'&nationalitate='+data.nationalitate+'&dataNasterii='+data.dataNasterii
+
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateUser = async (data) => {
+  try {
+    const response = await axios.put(
+      
+     '/persoana/update/'+data.id+'?nume='+data.nume+'&prenume='+data.prenume+'&email='+data.email+'&parola='+data.parola+'&departament='+data.departament+'&rol='+data.rol+'&nume_proiect='+data.nume_proiect+'&manager='+data.manager+'&tara='+data.tara+'&oras='+data.oras+'&nationalitate='+data.nationalitate+'&dataNasterii='+data.dataNasterii
+
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 export const deleteUser = async (id) => {
   try {
-    const response = await axios.get("/persoana/delete/" + id);
+    const response = await axios.delete("/persoana/delete/" + id);
     return response;
   } catch (error) {
     console.log(error);
@@ -108,6 +133,7 @@ export const addBirouri = async (etajID, camera, x, y) => {
     console.log(error);
   }
 };
+
 
 export const updateBirouri = async (birouri) => {
   try {
