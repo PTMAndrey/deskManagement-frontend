@@ -1,0 +1,44 @@
+@import '../../styles/variables.scss';
+@import '../../styles/mixins.scss';
+
+
+.containerUseri {
+    width: 100%;
+    min-height: 33rem;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 100%;
+    margin: 0 auto 32px auto;
+    // padding: 32px;
+
+    @include responsive_W550px {
+        justify-content: center;
+        // flex-direction: row;
+    }
+}
+
+.useriBody {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+
+}
+
+.width40{
+    width:40%;
+  }
+
+
+.buttonsModal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    button {
+        height: 30px;
+        width: 120px;
+    }
+}

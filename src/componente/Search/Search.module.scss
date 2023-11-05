@@ -6,10 +6,24 @@
     // display:flex;
     flex-direction: row;
     align-items: center;
-    height: 10%;
+    height: 100%;
     width:100%;
     min-width: 150px;
     justify-content: space-around;
     padding-top:30px;
     border-bottom:1px solid $color-gray-100;
+  }
+
+  .rowSearch{
+    display: flex;
+    justify-content: space-evenly;
+    margin: 20px 0;
+    border-bottom: 2px solid $color-gray-200;
+    padding-bottom: 20px;
+    col{
+      -webkit-user-select: all;  /* Chrome 49+ */
+      -moz-user-select: all;     /* Firefox 43+ */
+      -ms-user-select: all;      /* No support yet */
+      user-select: all;          /* Likely future */   
+    }
   }

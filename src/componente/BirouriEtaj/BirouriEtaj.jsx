@@ -3,20 +3,35 @@ import { Stage, Layer, Group, Image } from "react-konva";
 import { Html } from 'react-konva-utils';
 import { v4 as uuidv4 } from "uuid";
 import useImage from 'use-image';
-import { Col } from 'react-bootstrap';
-import { addBirouri, getBirouriPeEtaj } from '../../api/API';
+import { Col, Row } from 'react-bootstrap';
+import { addBirouri, getBirouriPeEtaj, updateBirouri } from '../../api/API';
 import Buton from '../Buton/Buton'
 import Popup from '../Popup/Popup';
 import Dropdown from '../Dropdown/Dropdown';
 import Img from "../Image/Image";
 import useAuth from '../../hooks/useAuth';
-import Etaj from './Etaj';
+import Etaj from './Etaj3';
 import pc from "../../assets/icons/pc.svg";
+import pcRezervat from '../../assets/icons/pcRezervat.svg';
 import styles from './BirouriEtaj.module.scss';
 import { CiUndo } from 'react-icons/ci';
+import { birou1, birou2, birou3, birou4, birou5, birou6 } from './coordonatesBiouri';
 
+import {
+    MDBBtn,
+    MDBModal,
+    MDBModalDialog,
+    MDBModalContent,
+    MDBModalHeader,
+    MDBModalTitle,
+    MDBModalBody
+} from 'mdb-react-ui-kit';
+import BookDesk from '../BookDesk/BookDesk';
+import useStateProvider from '../../hooks/useStateProvider';
+import { useNavigate } from 'react-router-dom';
 
 const BirouriEtaj = ({ rolComponenta }) => {
+
     const { user } = useAuth();
     const [etaj, setEtaj] = useState({ value: 1, label: 'Etajul 1' });
 
@@ -25,10 +40,14 @@ const BirouriEtaj = ({ rolComponenta }) => {
         etaje.push({ value: i, label: `Etajul ${i}` },);
     }
 
+    const { setAlert } = useStateProvider();
     const [ZIndex, setZIndex] = useState(10);
     const [modal, setModal] = useState(false);
-    const [counter, setCounter] = useState(0);
-    const [deleteDeskID, setDeleteDeskID] = useState(null);
+    const [deskID, setDeskID] = useState(null);
+    const [editBirou, setEditBirou] = useState(false);
+    const [addBirou, setAddBirou] = useState(false);
+    const [isFetched, setIsFetched] = useState(false);
+    const navigate = useNavigate();
 
     const [openPopup, setOpenPopup] = useState(false);
     const togglePopup = () => {
@@ -38,185 +57,330 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
     const dragUrl = useRef();
     const stageRef = useRef();
-    const [images, setImages] = useState([]);
+    const [birouri, setBirouri] = useState([]);
     let id = uuidv4();
+
+    const toggleModal = () => {
+        setModal(!modal);
+    };
+
+    function isPointInPolygon(point, polygon) {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const xi = polygon[i].x, yi = polygon[i].y;
+            const xj = polygon[j].x, yj = polygon[j].y;
+
+            const intersect = ((yi > point.y) !== (yj > point.y)) && (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
+
+            if (intersect) inside = !inside;
+            if (inside)
+                break;
+        }
+
+        return inside;
+    }
+
+    useEffect(() => {
+        fetchBirouri();
+    }, [])
 
 
     useEffect(() => {
-        if (rolComponenta === 'rezervaBirou') {
-            fetchBirouri();
-        }
+        fetchBirouri();
     }, [etaj])
+
 
     const fetchBirouri = async () => {
         try {
             const response = await getBirouriPeEtaj(etaj.value);
             if (response.status === 200) {
-                console.log(response.data);
-                // response.data.map((birou, index) => {
-                //     setImages([...images, { id: birou.id, counter: Number(String(birou.numar).slice(0, -1)), src: "http://localhost:3000/static/media/pc.55f98d641c464c430c2ad803d1ea18da.svg", x: birou.coordX, y: birou.coordY }])
+                const birouriNoi = response.data.map((birou, index) => {
+                    const isDeskReserved = birou.reservari.some(
+                        (rezervare) =>
+                            rezervare?.idBirou === birou?.id && rezervare?.idPersoana === user?.id
+                    );
+                    const src = isDeskReserved ? pcRezervat : pc;
+                    response.data.length > 0 && setIsFetched(true);
 
-                //     stageRef.current.setPointersPositions({x: birou.coordX, y: birou.coordY})
-                // })
-                const newImages = response.data.map((birou, index) => ({
-                    id: birou.id, 
-                    counter: Number(String(birou.numar).slice(0, -1)), 
-                    src: "http://localhost:3000/static/media/pc.55f98d641c464c430c2ad803d1ea18da.svg", 
-                    x: birou.coordX, 
-                    y: birou.coordY 
-                }));
-                response.data.map((birou, index) => stageRef.current.setPointersPositions({x: birou.coordX, y: birou.coordY}));
-                
-                setImages(newImages);
-                
-                setCounter(response.data.length);
+                    return {
+                        etaj: birou.etaj,
+                        id: birou.id,
+                        src: src,
+                        x: birou.coordX,
+                        y: birou.coordY,
+                        camera: birou.camera,
+                        rezervari: birou.reservari,
+                    };
+                });
+
+                response.data.map((birou, index) =>
+                    stageRef.current.setPointersPositions({
+                        x: birou.coordX,
+                        y: birou.coordY,
+                    })
+                );
+                setBirouri(birouriNoi);
             }
         } catch (error) {
+            setIsFetched(false);
             console.log(error);
         }
     }
-
+    const [addToUpdateBirouri, setAddToUpdateBirouri] = useState([]);
 
     const handleDrop = (e) => {
+        console.log('isFetched drop = ', isFetched);
         e.preventDefault();
         // register event position
         stageRef.current.setPointersPositions(e);
-        console.log(stageRef.current.getPointerPosition());
-        // add image
-        setImages([
-            ...images,
-            {
-                ...stageRef.current.getPointerPosition(),
-                src: dragUrl.current,
-                id,
-                counter: counter * Math.pow(10, etaj.value) + etaj.value, // last digit is etaj
-            }
-        ]);
-    };
-    console.log(user);
 
-    useEffect(() => {
-        console.log(images);
-        console.log(counter);
-    }, [images])
+        const point = stageRef.current.getPointerPosition();
+        let idd = id;
+        // add birou
+        if (isFetched === false) {
+            setBirouri([
+                ...birouri,
+                {
+                    etaj: etaj.value,
+                    ...stageRef.current.getPointerPosition(),
+                    src: dragUrl.current,
+                    id: idd,
+                    camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
+                }
+            ]);
+        }
+        if (isFetched === true) {
+            setAddToUpdateBirouri([
+                ...addToUpdateBirouri,
+                {
+                    etaj: etaj.value,
+                    ...stageRef.current.getPointerPosition(),
+                    src: dragUrl.current,
+                    id: idd,
+                    camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
+                }
+            ]);
+        }
+
+    };
 
     const dragHandle = (e) => {
-        //? Updated cordinates based on ID from image
 
-        console.log(typeof (e.target.x()));
-        setImages(
-            images.map((img) => {
-                if (img.id === e.target.attrs.id) {
-                    return { ...img, x: e.target.x(), y: e.target.y() };
-                }
+        const point = { x: e.target.x(), y: e.target.y() };
+        if (isFetched === true) {
+            setBirouri(
+                birouri.map((birou) => {
+                    if (birou.id === e.target.attrs.id) {
+                        return {
+                            ...birou, x: e.target.x(), y: e.target.y(),
+                            camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
+                        };
+                    }
 
-                return img;
-            })
-        );
+                    return birou;
+                })
+            );
+        }
+        if (addToUpdateBirouri.length > 0) {
+            setAddToUpdateBirouri(
+                addToUpdateBirouri.map((birou) => {
+                    if (birou.id === e.target.attrs.id) {
+                        return {
+                            ...birou, x: e.target.x(), y: e.target.y(),
+                            camera: isPointInPolygon(point, birou1) ? 1 : isPointInPolygon(point, birou2) ? 2 : isPointInPolygon(point, birou3) ? 3 : isPointInPolygon(point, birou4) ? 4 : isPointInPolygon(point, birou5) ? 5 : isPointInPolygon(point, birou6) ? 6 : 0
+                        };
+                    }
+
+                    return birou;
+                })
+            );
+        }
     };
 
 
     const handleSaveBirouriAdmin = async () => {
         try {
-            // if (!isFormValid()) {
-            //     setShowErrors(true);
-            //     setAlert({ type: 'danger', message: 'Câmpurile trebuie completate!' });
-            // }
-            // if (isFormValid()) {
-            //     setShowErrors(false);
-            const promises = images.map(image => addBirouri(etaj.value, image.counter, image.x, image.y));
+            let promises;
+            if (addToUpdateBirouri.length > 0)
+                promises = addToUpdateBirouri.map(birou => addBirouri(etaj.value, birou.camera, birou.x, birou.y));
+            else
+                promises = birouri.map(birou => addBirouri(etaj.value, birou.camera, birou.x, birou.y));
 
             try {
                 // Wait for all promises to resolve
                 await Promise.all(promises);
-                console.log('All data successfully added.');
+                setEditBirou(false);
+                setAlert({ type: 'success', message: 'Birouri adaugate cu succes!' });
+                setEditBirou(false);
+                setAddBirou(false);
+                // window.location.reload(false);
             } catch (err) {
                 // Handle errors here
                 console.error('An error occurred:', err);
+                setAlert({ type: 'danger', message: 'Eroare la adaugarea birourilor' });
             }
-            // })
-
-            // }
         } catch (e) {
             console.log(e)
         }
     }
 
-    const handleStergeBirouriAdmin = () => {
-        if (counter > 0) {
-            console.log(deleteDeskID);
-            if (!deleteDeskID) {
-                setImages(images.slice(0, -1));
-            } else {
-                setImages(images.filter(item => item.id !== deleteDeskID));
-                setDeleteDeskID(null);
+    const handleUpdateBirouriAdmin = async () => {
+        try {
+            let updatedBirouri = birouri.map(birou => ({
+                ...birou,
+                coordX: birou.x,
+                coordY: birou.y,
+                x: undefined,
+                y: undefined
+            }));
+
+            updatedBirouri = updatedBirouri.concat(addToUpdateBirouri.map(birou => ({
+                ...birou,
+                coordX: birou.x,
+                coordY: birou.y,
+                x: undefined,
+                y: undefined
+            })));
+
+            console.log(updatedBirouri);
+
+            const response = await updateBirouri(updatedBirouri)
+            try {
+                setEditBirou(false);
+                setAlert({ type: 'success', message: 'Birouri actualizate cu succes!' });
+                setEditBirou(false);
+                setAddBirou(false);
+                fetchBirouri();
+                // window.location.reload(false);
+            } catch (err) {
+                // Handle errors here
+                console.error('An error occurred:', err);
+                setAlert({ type: 'danger', message: 'Eroare la editarea birourilor' });
             }
-            togglePopup();
-            setCounter(counter - 1);
+        } catch (e) {
+            console.log(e)
         }
     }
 
 
+
+    const handleStergeBirouriAdmin = () => {
+        if (birouri.length > 0) {
+            console.log(deskID);
+            if (!deskID) {
+                setBirouri(birouri.slice(0, -1));
+            } else {
+                setBirouri(birouri.filter(item => item.id !== deskID));
+                setDeskID(null);
+            }
+            togglePopup();
+        }
+        else {
+            setIsFetched(false);
+        }
+    }
+    const handleEditBirouri = () => {
+        setEditBirou(true)
+        setAddBirou(false);
+    }
+
+    const handleAddBirouri = () => {
+        setEditBirou(false);
+        setAddBirou(true);
+    }
+
+    const handleCancel = () => {
+        setEditBirou(false);
+        setAddBirou(false);
+        fetchBirouri();
+    }
     return (
         <div >
+            {rolComponenta === 'admin' && editBirou === false &&
+                <Row className={styles.actionButtonsAdmin}>
+                    <Col>
+                        <Buton variant="tertiary" className={`mt-4 mb-4 rounded-pill  ${styles.width40}`} label='Edit' onClick={handleEditBirouri} />
+                    </Col>
+                    <Col>
+                        <Buton variant="tertiary" className={`mt-4 mb-4 rounded-pill  ${styles.width40}`} label='Add' onClick={handleAddBirouri} />
+                    </Col>
 
-            {rolComponenta === 'adaugaBirou' &&
-                <Col style={{ width: '20% !important' }}>
-                    <Buton variant="tertiary" className='mt-4 mb-4 rounded-pill' label='Salveaza' onClick={handleSaveBirouriAdmin} />
-                </Col>
+                </Row>
             }
+            <Row className={styles.actionButtonsAdmin}>
+                <Col>
+                    <Dropdown
+                        className={`mt-4 mb-4 ${styles.width40}`}
+                        name='etaj'
+                        title={etaj.label}
+                        value={etaj.value}
+                        options={etaje}
+                        onChange={(e) => {
+                            setEtaj({ value: e.value, label: e.label });
+                        }}
+                    />
+                </Col>
 
-            <Col>
-                <p className={styles.label}>Etaj</p>
-                <Dropdown
-                    className='mt-4'
-                    name='etaj'
-                    title={etaj.label}
-                    options={etaje}
-                    onChange={(e) => {
-                        // setFormValue({ ...formValue, etaj: e.value })
-                        setEtaj({ value: e.value, label: e.label });
-                    }}
-                // error={showErrors && checkErrors('etaj') ? true : false}
-                // helper={showErrors ? checkErrors('etaj') : ''}
-                />
-            </Col>
+                {rolComponenta === 'admin' && (editBirou === true || addBirou === true) &&
+                    <>
+                        {editBirou === true ?
+                            <Col>
+                                <Buton variant="tertiary" className={`mt-5 mb-5 rounded-pill `} label={'Actualizează'} onClick={handleUpdateBirouriAdmin} />
+                            </Col>
+                            :
+                            <Col>
+                                <Buton variant="tertiary" className={`mt-5 mb-5 rounded-pill `} label={'Salvează'} onClick={handleSaveBirouriAdmin} />
+                            </Col>
+                        }
+                        <Col>
+                            <Buton variant="destructive" className={`mt-5 mb-5 rounded-pill `} label='Anuleaza' onClick={handleCancel} />
+                        </Col>
+                    </>
+                }
+            </Row>
             <div
-                onDrop={rolComponenta === 'adaugaBirou' ? handleDrop : null}
+                onDrop={rolComponenta === 'admin' ? handleDrop : null}
                 onDragOver={(e) => e.preventDefault()}
                 className={styles.addBirou}
             >
-                {rolComponenta === 'adaugaBirou' ?
+                {rolComponenta === 'admin' && (editBirou === true || addBirou === true) ?
                     <>
-                        <ul className={styles.optiuni}>
-                            <li>
-                                <h4>Birou</h4>
-                                <img
-                                    alt={"pc"}
-                                    src={pc}
-                                    style={{ cursor: 'pointer' }}
-                                    width="30"
-                                    draggable="true"
-                                    onDragStart={(e) => {
-                                        dragUrl.current = e.target.src;
-                                        setCounter(counter + 1);
-                                    }}
-                                />
-                            </li>
-                            <li>
-                                <h4>Sterge ultimul birou</h4>
-                                <CiUndo style={{ cursor: images.length !== 0 ? 'pointer' : ' not-allowed' }} onClick={() => images.length !== 0 && togglePopup()} />
-                            </li>
-                        </ul>
+                        {/* admin interface */}
+                        {addBirou === true &&
+                            <ul className={styles.optiuni}>
+                                <li>
+                                    <h4>Birou</h4>
+                                    <img
+                                        alt={"pc"}
+                                        src={pc}
+                                        style={{ cursor: 'pointer' }}
+                                        width="30"
+                                        draggable="true"
+                                        onDragStart={(e) => {
+                                            dragUrl.current = e.target.src;
+                                            console.log(e.target.src)
+                                        }}
+                                    />
+                                </li>
+                                {addBirou === false ?
+                                    <li style={{ marginTop: '70px' }}></li>
+                                    :
+                                    <li >
+                                        <h4>Sterge ultimul birou</h4>
+                                        <CiUndo style={{ cursor: birouri.length !== 0 ? 'pointer' : ' not-allowed' }} onClick={() => birouri.length !== 0 && togglePopup()} />
+                                    </li>
+                                }
+                            </ul>
+                        }
                         <Stage
-                            width={1035}
+                            width={976}
                             height={558}
                             ref={stageRef}
                         >
                             <Layer>
                                 <Group
-                                    x={0}
-                                    y={-15}
+                                    x={-12}
+                                    y={-16}
                                     onMouseEnter={e => {
                                         e.target.getStage().container().style.cursor = "grab"
                                     }}
@@ -226,21 +390,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
                                     onMouseLeave={e => {
                                         const container = e.target.getStage().container();
                                         container.style.cursor = "default";
-                                    }}
-                                // tot: -60 -15
-                                // b1: -60 -15
-                                // b2: 
-                                >
-                                    {/* <Rect
-                                
-                                fill={"rgba(255, 255, 255, 0.9)"}
-                                stroke={"gray"}
-                                strokeWidth={5}
-                                lineJoin="bevel"
-                            /> */}
-                                    {/* <BGImage width={800}
-                                height={500}
-                                className={styles.itemOnClick} /> */}
+                                    }}>
                                     <Html
                                         divProps={{
                                             style: {
@@ -252,29 +402,45 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
                                     </Html>
 
-                                    {images.map((image, i) => {
+                                    {birouri.map((birou, i) => {
                                         return (
                                             <Img
                                                 style={{
                                                     zIndex: 125,
                                                 }}
-                                                image={image}
+                                                image={birou}
                                                 key={i}
                                                 onDragEnd={dragHandle}
-                                                id={image.id}
+                                                id={birou.id}
                                                 isDraggable={'true'}
                                                 className={styles.itemOnClick}
-                                                onClick={(e) => { console.log("ASASA", e.target.attrs.id); togglePopup(); setDeleteDeskID(e.target.attrs.id) }}
+                                                onClick={(e) => { console.log("ASASA", e.target.attrs.id); togglePopup(); setDeskID(e.target.attrs.id) }}
                                             />
-
+                                        );
+                                    })}
+                                    {addToUpdateBirouri.length > 0 && addToUpdateBirouri.map((birou, i) => {
+                                        return (
+                                            <Img
+                                                style={{
+                                                    zIndex: 125,
+                                                }}
+                                                image={birou}
+                                                key={i}
+                                                onDragEnd={dragHandle}
+                                                id={birou.id}
+                                                isDraggable={'true'}
+                                                className={styles.itemOnClick}
+                                                onClick={(e) => { console.log("ASASA", e.target.attrs.id); togglePopup(); setDeskID(e.target.attrs.id) }}
+                                            />
                                         );
                                     })}
                                 </Group>
                             </Layer>
                         </Stage>
                     </>
-                    :
 
+                    :
+                    // user interface 
                     <Stage
                         width={1035}
                         height={558}
@@ -307,7 +473,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
 
                                 </Html>
 
-                                {images.map((image, i) => {
+                                {birouri.map((image, i) => {
                                     return (
                                         <Img
                                             style={{
@@ -318,8 +484,24 @@ const BirouriEtaj = ({ rolComponenta }) => {
                                             id={image.id}
                                             className={styles.itemOnClick}
                                             isDraggable={'false'}
-                                            // onClick={(e) => { console.log("ASASA", e.target.attrs.id); rolComponenta === 'adaugaBirou' ? togglePopup() : setModal(true); setDeleteDeskID(e.target.attrs.id) }}
-                                            onClick={(e) => console.log('PL',e.target.id)}
+                                            onClick={(e) => { console.log('PL', e.target.id); toggleModal(); setDeskID(e.target.attrs.id) }}
+                                        />
+
+                                    );
+                                })}
+
+                                {addToUpdateBirouri.length > 0 && addToUpdateBirouri.map((birou, i) => {
+                                    return (
+                                        <Img
+                                            style={{
+                                                zIndex: 125,
+                                            }}
+                                            image={birou}
+                                            key={i}
+                                            id={birou.id}
+                                            className={styles.itemOnClick}
+                                            isDraggable={'false'}
+                                            onClick={(e) => { console.log('PL', e.target.id); toggleModal(); setDeskID(e.target.attrs.id) }}
                                         />
 
                                     );
@@ -350,7 +532,7 @@ const BirouriEtaj = ({ rolComponenta }) => {
                                     </button>
                                     <button
                                         className={styles.deletePopup}
-                                        onClick={() => { togglePopup(); setDeleteDeskID(null) }}
+                                        onClick={() => { togglePopup(); setDeskID(null) }}
                                     >
                                         Renunț
                                     </button>
@@ -360,6 +542,26 @@ const BirouriEtaj = ({ rolComponenta }) => {
                     />
                 )
             }
+
+            {
+                modal && (
+                    <MDBModal show={modal} tabIndex='-1' setShow={setModal}>
+                        <MDBModalDialog size="lg">
+                            <MDBModalContent>
+                                <MDBModalHeader>
+                                    <MDBModalTitle>Rezerva birou</MDBModalTitle>
+                                    <MDBBtn className='btn-close' color='none' onClick={toggleModal}></MDBBtn>
+                                </MDBModalHeader>
+                                <MDBModalBody>
+                                    <BookDesk fetchBirouri={fetchBirouri} rol='rezervareBirou' idEtaj={etaj.value} idBirou={deskID} toggleModal={toggleModal} />
+
+                                </MDBModalBody>
+                            </MDBModalContent>
+                        </MDBModalDialog>
+                    </MDBModal>
+                )
+            }
+
         </div >
     );
 };

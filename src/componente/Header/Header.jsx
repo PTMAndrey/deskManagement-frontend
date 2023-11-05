@@ -19,7 +19,7 @@ const Header = (props) => {
   const { logout } = useAuth();
   const handleLogout = () => {
     logout();
-    navigate("/");
+    navigate("/login");
   };
 
   return (
@@ -41,6 +41,10 @@ const Header = (props) => {
             <Offcanvas.Body className={styles.bodyNav}>
               <Nav className="justify-content-end flex-grow-1 pe-3 p-2 d-flex align-items-center">
                 <Nav.Link href="/">Acasa</Nav.Link>
+                <Nav.Link href="/birouri">Birouri</Nav.Link>
+                {user?.rol === 'Admin' && <Nav.Link href="/utilizatori">Utilizatori </Nav.Link>}
+
+
                 {!user ? (
                   <Nav.Link
                     href="/login"
@@ -64,22 +68,11 @@ const Header = (props) => {
                     className={`${styles.profileTitle} `}
                     id={`offcanvasNavbarDropdown-expand-${props.expand}`}
                   >
-                    {/* <NavDropdown.Item className={styles.hello}>
-                        {"Hello, " + user.prenume}
-                      </NavDropdown.Item> */}
-
                     <NavDropdown.Item
                       // className={`${styles.hello}`}
-                      href="/profilulMeu/profil"
+                      href="/profil"
                     >
                       Profil
-                    </NavDropdown.Item>
-
-                    <NavDropdown.Item
-                      // className={`${styles.hello}`}
-                      href="/profilulMeu/securitate"
-                    >
-                      Securitate
                     </NavDropdown.Item>
 
                     <NavDropdown.Divider />
@@ -93,6 +86,7 @@ const Header = (props) => {
                     </NavDropdown.Item>
                   </NavDropdown>
                 )}
+
               </Nav>
             </Offcanvas.Body>
           </Navbar.Offcanvas>

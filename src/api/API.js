@@ -24,22 +24,32 @@ export const login = async (email, password) => {
   }
 };
 
+
+export const getAllUsers = async (id) => {
+  try {
+    const response = await axios.get("/persoana/get/all");
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+export const deleteUser = async (id) => {
+  try {
+    const response = await axios.get("/persoana/delete/" + id);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
 // get user by id
 export const getUserById = async (id) => {
   try {
     const response = await axios.get("/persoana/get/" + id);
     return response;
-    // return {
-    //   data: {
-    //     userId: "44232",
-    //     firstName: "Andrei",
-    //     lastName: "Andries",
-    //     token: "tkn123",
-    //     email: "email@email.com",
-    //     password: "1234",
-    //   },
-    //   response: 200,
-    // };
   } catch (error) {
     console.log(error);
   }
@@ -55,12 +65,30 @@ export const getBirouriPeEtaj = async (etaj) => {
   }
 };
 
-
+export const searchEmployee = async(string) =>{
+  try {
+    const response = await axios.get("/persoana/get/persoane/filtrare?searchString=" + string);
+    return response;
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 export const getBirouriLiberePeEtaj = async (data) => {
   try {
     const response = await axios.get(
-      "/birou/get/freeDesks/" + data.etaj + '/' + data.ziuaCautare + '/' + data.oraInceput + '/' + data.oraFinal
+      "/birou/get/freeDesks/" + data.etaj + '/' + data.ziuaCautare + '/' + data.oraInceput + '/' + data.oraIncheiere
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getIsBirouFree = async (id, data) => {
+  try {
+    const response = await axios.get(
+      "/birou/get/isBirouFree/" + id + '/' + data.ziuaCautare + '/' + data.oraInceput + '/' + data.oraIncheiere
     );
     return response;
   } catch (error) {
@@ -70,11 +98,72 @@ export const getBirouriLiberePeEtaj = async (data) => {
 
 
 
-export const addBirouri = async (etajID, counter, x, y) => {
+export const addBirouri = async (etajID, camera, x, y) => {
   try {
     const response = await axios.post(
-      "/birou/add?numar=" + counter + '&etaj=' + etajID + '&coordX=' + x + '&coordY=' + y
+      "/birou/add?camera=" + camera + '&etaj=' + etajID + '&coordX=' + x + '&coordY=' + y
     );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateBirouri = async (birouri) => {
+  try {
+    const response = await axios.put("/birou/put/update/birouri", birouri);
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+export const rezervaBirou = async (idBirou, userID, data) => {
+  try {
+    const response = await axios.post(
+      "/rezervare/add/" + idBirou + '/' + userID, { 'data': data.ziuaCautare, 'oraFinal': data.oraIncheiere, 'oraInceput': data.oraInceput }
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+export const getRezervariByUserID = async (userID) => {
+  try {
+    const response = await axios.get(
+      "/persoana/get/rezervari/" + userID
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+export const deleteRezervareByID = async (rezID) => {
+  try {
+    const response = await axios.delete(
+      "/rezervare/delete/" + rezID
+    );
+    return response;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+
+
+export const updateUserPoza = async (userid, data) => {
+  try {
+    const response = await axios.put(
+      "/persoana/update/poza/" + userid, data, {
+      headers: { 'Content-Type': 'multipart/form-data', },
+      // params:{file:file ? file : null}
+    });
     return response;
   } catch (error) {
     console.log(error);
